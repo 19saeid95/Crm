@@ -1,1 +1,9 @@
-<Solution />
+<Solution>
+  <Folder Name="/Src/">
+    <Project Path="Src/Crm.Api/Crm.Api.csproj" Id="a884b1fb-1b82-4173-ba1b-4206e3745792" />
+    <Project Path="Src/Crm.Application/Crm.Application.csproj" Id="116d83e5-70d8-4f50-adac-a59fb901876c" />
+    <Project Path="Src/Crm.Domain/Crm.Domain.csproj" Id="f0ff47f0-5e2c-4c81-b600-ff3b81b5f40a" />
+    <Project Path="Src/Crm.Infrastructure/Crm.Infrastructure.csproj" Id="2971a427-2f3f-4199-a319-6d76a26aa34d" />
+  </Folder>
+  <Folder Name="/Tests/" />
+</Solution>
