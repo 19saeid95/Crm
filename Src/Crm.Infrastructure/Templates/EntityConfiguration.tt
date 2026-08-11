@@ -1,0 +1,56 @@
+<#@ template hostspecific="true" language="C#" #>
+<#@ include file="EFCore.PowerTools.ttinclude" #>
+<#@ import namespace="System.Linq" #>
+<#@ output extension=".cs" #>
+<#
+    var host = (TemplateHost)Host;
+    var entity = host.CurrentEntity;
+#>
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Crm.Domain.Entities;
+
+namespace Crm.Infrastructure.Persistence.Configurations
+{
+    public class <#= entity.Name #>Configuration : IEntityTypeConfiguration<<#= entity.Name #>>
+    {
+        public void Configure(EntityTypeBuilder<<#= entity.Name #>> builder)
+        {
+            builder.ToTable("<#= entity.Table #>", "<#= entity.Schema ?? "dbo" #>");
+
+            builder.HasKey(e => e.Id);
+
+<#
+    foreach (var prop in entity.Properties.Where(p => !p.IsPrimaryKey))
+    {
+        if (prop.MaxLength > 0)
+        {
+#>
+            builder.Property(e => e.<#= prop.Name #>)
+                .HasMaxLength(<#= prop.MaxLength #>);
+<#
+        }
+        else if (prop.IsRequired && prop.PropertyType == "string")
+        {
+#>
+            builder.Property(e => e.<#= prop.Name #>)
+                .IsRequired()
+                .HasMaxLength(255);
+<#
+        }
+    }
+
+    foreach (var nav in entity.Navigations.Where(n => !n.IsCollection))
+    {
+#>
+
+            builder.HasOne(e => e.<#= nav.Name #>)
+                .WithMany(e => e.<#= nav.InverseNavigationName #>)
+                .HasForeignKey(e => e.<#= nav.ForeignKeyName #>)
+                .OnDelete(DeleteBehavior.Restrict);
+<#
+    }
+#>
+        }
+    }
+}
