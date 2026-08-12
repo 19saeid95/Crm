@@ -1,4 +1,4 @@
-﻿using Crm.Domain.BaseEntites;
+﻿using Crm.Domain.Entities.BaseEntites;
 using Crm.Domain.Repositories.Generics;
 
 namespace Crm.Infrastructure.Repositories.Generics;

@@ -1,4 +1,4 @@
-﻿namespace Crm.Domain.BaseEntites;
+﻿namespace Crm.Domain.Entities.BaseEntites;
 
 public abstract class BaseEntity<TKey>
 {
