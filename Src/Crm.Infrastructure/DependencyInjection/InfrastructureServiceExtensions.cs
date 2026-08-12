@@ -1,11 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Crm.Application.Interfaces.Authentication;
 using Crm.Domain.Repositories;
+using Crm.Domain.Repositories.Generics;
+using Crm.Infrastructure.Authentication;
 using Crm.Infrastructure.Persistence;
 using Crm.Infrastructure.Repositories;
-using Crm.Domain.Repositories.Generics;
 using Crm.Infrastructure.Repositories.Generics;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Crm.Infrastructure.DependencyInjection;
 
@@ -21,9 +23,21 @@ public static class InfrastructureServiceExtensions
                 configuration.GetConnectionString("CrmDb"));
         });
 
-        services.AddScoped(typeof(IRepository<,>),typeof(Repository<,>));
+        services.AddScoped(
+            typeof(IRepository<,>),
+            typeof(Repository<,>));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddScoped<
+            IPasswordHasher,
+            PasswordHasher>();
+
+        services.AddScoped<
+            IJwtTokenGenerator,
+            JwtTokenGenerator>();
+
+        services.AddScoped<IUserRepository, UserRepository>();
 
         return services;
     }

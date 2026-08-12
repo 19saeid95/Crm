@@ -7,20 +7,32 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Commands\**" />
+    <Compile Remove="DTOs\**" />
+    <Compile Remove="Mappers\**" />
+    <Compile Remove="Queries\**" />
+    <Compile Remove="Validators\**" />
+    <EmbeddedResource Remove="Commands\**" />
+    <EmbeddedResource Remove="DTOs\**" />
+    <EmbeddedResource Remove="Mappers\**" />
+    <EmbeddedResource Remove="Queries\**" />
+    <EmbeddedResource Remove="Validators\**" />
+    <None Remove="Commands\**" />
+    <None Remove="DTOs\**" />
+    <None Remove="Mappers\**" />
+    <None Remove="Queries\**" />
+    <None Remove="Validators\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="16.2.0" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+	  <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="MediatR" Version="14.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Crm.Domain\Crm.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Commands\" />
-    <Folder Include="DTOs\" />
-    <Folder Include="Mappers\" />
-    <Folder Include="Validators\" />
-    <Folder Include="Queries\" />
   </ItemGroup>
 
 </Project>
