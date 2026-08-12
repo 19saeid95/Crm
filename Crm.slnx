@@ -5,5 +5,8 @@
     <Project Path="Src/Crm.Domain/Crm.Domain.csproj" Id="f0ff47f0-5e2c-4c81-b600-ff3b81b5f40a" />
     <Project Path="Src/Crm.Infrastructure/Crm.Infrastructure.csproj" Id="2971a427-2f3f-4199-a319-6d76a26aa34d" />
   </Folder>
-  <Folder Name="/Tests/" />
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Crm.IntegrationTests/Crm.IntegrationTests.csproj" Id="10dd31f5-bb50-4c1f-a010-852a16c116bd" />
+    <Project Path="Tests/Crm.UnitTests/Crm.UnitTests.csproj" Id="9f012335-8d20-49c8-bbd3-50528eea7666" />
+  </Folder>
 </Solution>

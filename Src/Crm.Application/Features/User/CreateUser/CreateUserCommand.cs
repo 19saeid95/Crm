@@ -7,5 +7,4 @@ public sealed record CreateUserCommand(
     string? LastName,
     string UserName,
     string Password,
-    string Phone,
-    bool IsSuperAdmin) : IRequest<CreateUserResponse>;
+    string Phone) : IRequest<CreateUserResponse>;

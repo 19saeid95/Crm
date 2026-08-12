@@ -1,15 +1,17 @@
 ﻿using Crm.Application.Features.Auth.Login;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crm.Api.Controllers.V1;
 
 public class AuthController(ISender sender) : BaseController
 {
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(
-        LoginCommand command,
-        CancellationToken cancellationToken)
+       LoginCommand command,
+       CancellationToken cancellationToken)
     {
         var result = await sender.Send(
             command,

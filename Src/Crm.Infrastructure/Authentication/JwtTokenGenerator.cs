@@ -8,8 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Crm.Infrastructure.Authentication;
 
-public class JwtTokenGenerator(
-    IConfiguration configuration) : IJwtTokenGenerator
+public sealed class JwtTokenGenerator(
+    IConfiguration configuration)
+    : IJwtTokenGenerator
 {
     public string GenerateToken(User user)
     {
@@ -19,13 +20,25 @@ public class JwtTokenGenerator(
             ?? throw new InvalidOperationException(
                 "JWT SecretKey is not configured.");
 
-        var issuer = jwtSection["Issuer"];
-        var audience = jwtSection["Audience"];
+        var issuer = jwtSection["Issuer"]
+            ?? throw new InvalidOperationException(
+                "JWT Issuer is not configured.");
+
+        var audience = jwtSection["Audience"]
+            ?? throw new InvalidOperationException(
+                "JWT Audience is not configured.");
+
+        var now = DateTime.UtcNow;
+        var expiresAt = now.AddHours(1);
 
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(ClaimTypes.Name, user.UserName)
+            new(JwtRegisteredClaimNames.UniqueName, user.UserName),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat,
+                new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64)
         };
 
         if (user.IsSuperAdmin)
@@ -45,7 +58,8 @@ public class JwtTokenGenerator(
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            notBefore: now,
+            expires: expiresAt,
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler()
