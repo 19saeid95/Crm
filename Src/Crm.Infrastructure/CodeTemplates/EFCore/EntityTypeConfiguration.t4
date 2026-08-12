@@ -1,0 +1,238 @@
+﻿<#@ template hostSpecific="true" debug="false" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
+<#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
+<#@ assembly name="Microsoft.Extensions.DependencyInjection.Abstractions" #>
+<#@ parameter name="EntityType" type="Microsoft.EntityFrameworkCore.Metadata.IEntityType" #>
+<#@ parameter name="Options" type="Microsoft.EntityFrameworkCore.Scaffolding.ModelCodeGenerationOptions" #>
+<#@ parameter name="NamespaceHint" type="System.String" #>
+<#@ parameter name="ProjectDefaultNamespace" type="System.String" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore.Design" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore.Infrastructure" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore.Scaffolding" #>
+<#@ import namespace="Microsoft.Extensions.DependencyInjection" #>
+<#@ import namespace="Microsoft.EntityFrameworkCore.Metadata.Builders" #>
+<#
+    // Template version: 1000_Split - please do NOT remove this line
+
+    if (EntityType.IsSimpleManyToManyJoinEntityType())
+    {
+        return "";
+    }
+
+    var services = (IServiceProvider)Host;
+    var annotationCodeGenerator =
+        services.GetRequiredService<IAnnotationCodeGenerator>();
+
+    var code =
+        services.GetRequiredService<ICSharpHelper>();
+
+    var usings = new List<string>
+    {
+        "System",
+        "System.Collections.Generic",
+        "Microsoft.EntityFrameworkCore",
+        "Microsoft.EntityFrameworkCore.Metadata.Builders"
+    };
+
+   usings.Add("Crm.Domain.Entities");
+
+    if (!string.IsNullOrEmpty(NamespaceHint))
+    {
+#>
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+<#
+    }
+#>
+public partial class <#= EntityType.Name #>Configuration
+    : IEntityTypeConfiguration<<#= EntityType.Name #>>
+{
+    public void Configure(
+        EntityTypeBuilder<<#= EntityType.Name #>> entity)
+    {
+<#
+    var anyConfiguration = false;
+
+    var key = EntityType.FindPrimaryKey();
+
+    if (key != null)
+    {
+        var keyFluentApiCalls =
+            key.GetFluentApiCalls(annotationCodeGenerator);
+
+        if (keyFluentApiCalls != null ||
+            (!key.IsHandledByConvention() && !Options.UseDataAnnotations))
+        {
+            if (keyFluentApiCalls != null)
+            {
+                usings.AddRange(
+                    keyFluentApiCalls.GetRequiredUsings());
+            }
+#>
+        entity.HasKey(
+            <#= code.Lambda(key.Properties, "e") #>
+        )<#= code.Fragment(keyFluentApiCalls, indent: 3) #>;
+<#
+            anyConfiguration = true;
+        }
+    }
+
+    var entityTypeFluentApiCalls =
+        EntityType.GetFluentApiCalls(annotationCodeGenerator)
+            ?.FilterChain(c =>
+                !(Options.UseDataAnnotations &&
+                  c.IsHandledByDataAnnotations));
+
+    if (entityTypeFluentApiCalls != null)
+    {
+        usings.AddRange(
+            entityTypeFluentApiCalls.GetRequiredUsings());
+
+        if (anyConfiguration)
+        {
+            WriteLine("");
+        }
+#>
+        entity<#= code.Fragment(entityTypeFluentApiCalls, indent: 3) #>;
+<#
+        anyConfiguration = true;
+    }
+
+    foreach (var index in EntityType.GetIndexes()
+        .Where(i =>
+            !(Options.UseDataAnnotations &&
+              i.IsHandledByDataAnnotations(annotationCodeGenerator))))
+    {
+        if (anyConfiguration)
+        {
+            WriteLine("");
+        }
+
+        var indexFluentApiCalls =
+            index.GetFluentApiCalls(annotationCodeGenerator);
+
+        if (indexFluentApiCalls != null)
+        {
+            usings.AddRange(
+                indexFluentApiCalls.GetRequiredUsings());
+        }
+#>
+        entity.HasIndex(
+            <#= code.Lambda(index.Properties, "e") #>,
+            <#= code.Literal(index.GetDatabaseName()) #>
+        )<#= code.Fragment(indexFluentApiCalls, indent: 3) #>;
+<#
+        anyConfiguration = true;
+    }
+
+    var firstProperty = true;
+
+    foreach (var property in EntityType.GetProperties())
+    {
+        var propertyFluentApiCalls =
+            property.GetFluentApiCalls(annotationCodeGenerator)
+                ?.FilterChain(c =>
+                    !(Options.UseDataAnnotations &&
+                      c.IsHandledByDataAnnotations)
+                    &&
+                    !(c.Method == "IsRequired" &&
+                      Options.UseNullableReferenceTypes &&
+                      !property.ClrType.IsValueType));
+
+        if (propertyFluentApiCalls == null)
+        {
+            continue;
+        }
+
+        usings.AddRange(
+            propertyFluentApiCalls.GetRequiredUsings());
+
+        if (anyConfiguration && firstProperty)
+        {
+            WriteLine("");
+        }
+#>
+        entity.Property(e => e.<#= property.Name #>)
+            <#= code.Fragment(propertyFluentApiCalls, indent: 3) #>;
+<#
+        anyConfiguration = true;
+        firstProperty = false;
+    }
+
+    foreach (var foreignKey in EntityType.GetForeignKeys())
+    {
+        var foreignKeyFluentApiCalls =
+            foreignKey.GetFluentApiCalls(annotationCodeGenerator)
+                ?.FilterChain(c =>
+                    !(Options.UseDataAnnotations &&
+                      c.IsHandledByDataAnnotations));
+
+        if (foreignKeyFluentApiCalls == null)
+        {
+            continue;
+        }
+
+        usings.AddRange(
+            foreignKeyFluentApiCalls.GetRequiredUsings());
+
+        if (anyConfiguration)
+        {
+            WriteLine("");
+        }
+
+        if (foreignKey.DependentToPrincipal?.Name != null)
+        {
+#>
+        entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>)
+            .<#= foreignKey.IsUnique ? "WithOne" : "WithMany" #>(
+                <#= foreignKey.PrincipalToDependent?.Name != null
+                    ? $"p => p.{foreignKey.PrincipalToDependent.Name}"
+                    : "" #>
+            )
+            <#= code.Fragment(foreignKeyFluentApiCalls, indent: 3) #>;
+<#
+        }
+
+        anyConfiguration = true;
+    }
+#>
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<<#= EntityType.Name #>> entity);
+}
+
+<#
+    var mainEnvironment = GenerationEnvironment;
+    GenerationEnvironment = new StringBuilder();
+
+    WriteLine(
+        "// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>");
+
+    if (Options.UseNullableReferenceTypes)
+    {
+        WriteLine("#nullable enable");
+    }
+
+    WriteLine("");
+
+    foreach (var ns in usings
+        .Distinct()
+        .OrderBy(x => x, new NamespaceComparer()))
+    {
+#>
+using <#= ns #>;
+<#
+    }
+
+    WriteLine("");
+
+    GenerationEnvironment.Append(mainEnvironment);
+#>
