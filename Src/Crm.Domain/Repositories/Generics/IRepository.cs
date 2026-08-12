@@ -2,7 +2,7 @@
 
 namespace Crm.Domain.Repositories.Generics;
 
-public interface IEfRepository<TEntity, TKey>
+public interface IRepository<TEntity, TKey>
     where TEntity : BaseEntity<TKey>
 {
     Task<TEntity?> GetByIdAsync(

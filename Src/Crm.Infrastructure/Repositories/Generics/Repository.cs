@@ -3,9 +3,9 @@ using Crm.Domain.Repositories.Generics;
 
 namespace Crm.Infrastructure.Repositories.Generics;
 
-public class EfRepository<TEntity, TKey>(
+public class Repository<TEntity, TKey>(
     CrmDbContext context)
-    : IEfRepository<TEntity, TKey>
+    : IRepository<TEntity, TKey>
     where TEntity : BaseEntity<TKey>
 {
     protected readonly CrmDbContext Context = context;
