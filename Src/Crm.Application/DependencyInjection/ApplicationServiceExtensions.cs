@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
-using AutoMapper;
+using Crm.Application.Common.Behaviors;
 
 namespace Crm.Application.DependencyInjection;
 
@@ -13,10 +13,14 @@ public static class ApplicationServiceExtensions
         {
             config.RegisterServicesFromAssembly(
                 typeof(ApplicationServiceExtensions).Assembly);
+
+            config.AddOpenBehavior(
+                typeof(ValidationBehavior<,>));
         });
 
         services.AddValidatorsFromAssembly(
             typeof(ApplicationServiceExtensions).Assembly);
+
 
         services.AddAutoMapper(
             config => { },

@@ -1,4 +1,5 @@
 using Crm.Api.Extensions;
+using Crm.Api.Middleware;
 using Crm.Application.DependencyInjection;
 using Crm.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -50,7 +51,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
