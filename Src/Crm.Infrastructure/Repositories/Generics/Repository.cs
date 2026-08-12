@@ -1,5 +1,7 @@
 ﻿using Crm.Domain.Entities.BaseEntites;
 using Crm.Domain.Repositories.Generics;
+using Crm.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Crm.Infrastructure.Repositories.Generics;
 
