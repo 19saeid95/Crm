@@ -1,4 +1,6 @@
-﻿using Crm.Application.Interfaces.Authentication;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Crm.Application.Interfaces.Authentication;
 using StackExchange.Redis;
 
 namespace Crm.Infrastructure.Authentication;
@@ -18,12 +20,14 @@ public sealed class RedisRefreshTokenService(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var refreshToken = Guid.NewGuid().ToString("N");
+        var refreshToken = GenerateToken();
+
+        var tokenHash = ComputeHash(refreshToken);
 
         var database = redis.GetDatabase();
 
         await database.StringSetAsync(
-            GetKey(refreshToken),
+            GetKey(tokenHash),
             userId.ToString(),
             RefreshTokenLifetime);
 
@@ -36,18 +40,21 @@ public sealed class RedisRefreshTokenService(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        var tokenHash = ComputeHash(refreshToken);
+
         var database = redis.GetDatabase();
 
         var value = await database.StringGetAsync(
-            GetKey(refreshToken));
+            GetKey(tokenHash));
 
         if (!value.HasValue)
             return null;
 
-        if (!long.TryParse(value.ToString(), out var userId))
-            return null;
-
-        return userId;
+        return long.TryParse(
+            value.ToString(),
+            out var userId)
+            ? userId
+            : null;
     }
 
     public async Task RevokeAsync(
@@ -56,14 +63,39 @@ public sealed class RedisRefreshTokenService(
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        var tokenHash = ComputeHash(refreshToken);
+
         var database = redis.GetDatabase();
 
         await database.KeyDeleteAsync(
-            GetKey(refreshToken));
+            GetKey(tokenHash));
     }
 
-    private static RedisKey GetKey(string refreshToken)
+    private static string GenerateToken()
     {
-        return $"{KeyPrefix}{refreshToken}";
+        Span<byte> bytes = stackalloc byte[32];
+
+        RandomNumberGenerator.Fill(bytes);
+
+        return Convert.ToBase64String(bytes)
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .TrimEnd('=');
+    }
+
+    private static string ComputeHash(
+        string refreshToken)
+    {
+        var bytes = Encoding.UTF8.GetBytes(refreshToken);
+
+        var hash = SHA256.HashData(bytes);
+
+        return Convert.ToHexString(hash);
+    }
+
+    private static RedisKey GetKey(
+        string tokenHash)
+    {
+        return $"{KeyPrefix}{tokenHash}";
     }
 }
