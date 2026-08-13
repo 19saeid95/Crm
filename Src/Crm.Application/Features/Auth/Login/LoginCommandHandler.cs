@@ -1,13 +1,17 @@
-﻿using Crm.Application.Interfaces.Authentication;
-using Crm.Domain.Repositories;
+﻿using Crm.Application.Features.Auth.Login;
+using Crm.Application.Interfaces.Authentication;
 using MediatR;
 
-namespace Crm.Application.Features.Auth.Login;
-
 public sealed class LoginCommandHandler(
-    IUserRepository userRepository, IPasswordHasher passwordHasher, IJwtTokenGenerator jwtTokenGenerator) : IRequestHandler<LoginCommand, LoginResponse>
+    IUserRepository userRepository,
+    IPasswordHasher passwordHasher,
+    IJwtTokenGenerator jwtTokenGenerator,
+    IRefreshTokenService refreshTokenService)
+    : IRequestHandler<LoginCommand, LoginResponse>
 {
-    public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<LoginResponse> Handle(
+        LoginCommand request,
+        CancellationToken cancellationToken)
     {
         var user = await userRepository.GetByUserNameAsync(
             request.UserName,
@@ -25,10 +29,17 @@ public sealed class LoginCommandHandler(
             throw new UnauthorizedAccessException(
                 "نام کاربری یا رمز عبور اشتباه است.");
 
-        var accessToken = jwtTokenGenerator.GenerateToken(user);
+        var accessToken =
+            jwtTokenGenerator.GenerateToken(user);
+
+        var refreshToken =
+            await refreshTokenService.CreateAsync(
+                user.Id,
+                cancellationToken);
 
         return new LoginResponse(
             accessToken,
-            DateTime.UtcNow.AddHours(1));
+            DateTime.UtcNow.AddHours(1),
+            refreshToken);
     }
 }

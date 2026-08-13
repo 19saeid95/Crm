@@ -8,6 +8,7 @@ using Crm.Infrastructure.Repositories.Generics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace Crm.Infrastructure.DependencyInjection;
 
@@ -38,6 +39,18 @@ public static class InfrastructureServiceExtensions
             JwtTokenGenerator>();
 
         services.AddScoped<IUserRepository, UserRepository>();
+
+        var redisConnectionString =
+            configuration["Redis:ConnectionString"]
+            ?? throw new InvalidOperationException(
+             "Redis:ConnectionString is not configured.");
+
+        services.AddSingleton<IConnectionMultiplexer>(
+            _ => ConnectionMultiplexer.Connect(
+                redisConnectionString));
+
+        services.AddScoped<IRefreshTokenService,
+            RedisRefreshTokenService>();
 
         return services;
     }
