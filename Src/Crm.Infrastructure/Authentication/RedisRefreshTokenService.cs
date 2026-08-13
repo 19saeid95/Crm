@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Crm.Application.Interfaces.Authentication;
 using StackExchange.Redis;
 
@@ -10,31 +11,50 @@ public sealed class RedisRefreshTokenService(
     : IRefreshTokenService
 {
     private const string KeyPrefix = "crm:refresh-token:";
+    private const string FamilyPrefix = "crm:refresh-family:";
 
     private static readonly TimeSpan RefreshTokenLifetime =
         TimeSpan.FromDays(7);
 
-    public async Task<string> CreateAsync(
+    public async Task<RefreshTokenResult> CreateAsync(
         long userId,
+        string? familyId = null,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var refreshToken = GenerateToken();
+        var token = GenerateToken();
 
-        var tokenHash = ComputeHash(refreshToken);
+        var tokenHash = ComputeHash(token);
+
+        familyId ??= Guid.NewGuid().ToString("N");
+
+        var data = new RefreshTokenData(
+            userId,
+            familyId,
+            false);
 
         var database = redis.GetDatabase();
 
         await database.StringSetAsync(
-            GetKey(tokenHash),
-            userId.ToString(),
+            GetTokenKey(tokenHash),
+            JsonSerializer.Serialize(data),
             RefreshTokenLifetime);
 
-        return refreshToken;
+        await database.SetAddAsync(
+            GetFamilyKey(familyId),
+            tokenHash);
+
+        await database.KeyExpireAsync(
+            GetFamilyKey(familyId),
+            RefreshTokenLifetime);
+
+        return new RefreshTokenResult(
+            token,
+            familyId);
     }
 
-    public async Task<long?> ValidateAsync(
+    public async Task<RefreshTokenValidationResult?> ValidateAsync(
         string refreshToken,
         CancellationToken cancellationToken = default)
     {
@@ -45,16 +65,21 @@ public sealed class RedisRefreshTokenService(
         var database = redis.GetDatabase();
 
         var value = await database.StringGetAsync(
-            GetKey(tokenHash));
+            GetTokenKey(tokenHash));
 
         if (!value.HasValue)
             return null;
 
-        return long.TryParse(
-            value.ToString(),
-            out var userId)
-            ? userId
-            : null;
+        var data = JsonSerializer.Deserialize<RefreshTokenData>(
+            value.ToString());
+
+        if (data is null)
+            return null;
+
+        return new RefreshTokenValidationResult(
+            data.UserId,
+            data.FamilyId,
+            data.IsRevoked);
     }
 
     public async Task RevokeAsync(
@@ -67,8 +92,65 @@ public sealed class RedisRefreshTokenService(
 
         var database = redis.GetDatabase();
 
-        await database.KeyDeleteAsync(
-            GetKey(tokenHash));
+        var value = await database.StringGetAsync(
+            GetTokenKey(tokenHash));
+
+        if (!value.HasValue)
+            return;
+
+        var data = JsonSerializer.Deserialize<RefreshTokenData>(
+            value.ToString());
+
+        if (data is null)
+            return;
+
+        var revokedData = data with
+        {
+            IsRevoked = true
+        };
+
+        await database.StringSetAsync(
+            GetTokenKey(tokenHash),
+            JsonSerializer.Serialize(revokedData),
+            RefreshTokenLifetime);
+    }
+
+    public async Task RevokeFamilyAsync(
+        string familyId,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var database = redis.GetDatabase();
+
+        var tokenHashes = await database.SetMembersAsync(
+            GetFamilyKey(familyId));
+
+        foreach (var tokenHash in tokenHashes)
+        {
+            var key = GetTokenKey(tokenHash!);
+
+            var value = await database.StringGetAsync(key);
+
+            if (!value.HasValue)
+                continue;
+
+            var data = JsonSerializer.Deserialize<RefreshTokenData>(
+                value.ToString());
+
+            if (data is null)
+                continue;
+
+            var revokedData = data with
+            {
+                IsRevoked = true
+            };
+
+            await database.StringSetAsync(
+                key,
+                JsonSerializer.Serialize(revokedData),
+                RefreshTokenLifetime);
+        }
     }
 
     private static string GenerateToken()
@@ -93,9 +175,20 @@ public sealed class RedisRefreshTokenService(
         return Convert.ToHexString(hash);
     }
 
-    private static RedisKey GetKey(
+    private static RedisKey GetTokenKey(
         string tokenHash)
     {
         return $"{KeyPrefix}{tokenHash}";
     }
+
+    private static RedisKey GetFamilyKey(
+        string familyId)
+    {
+        return $"{FamilyPrefix}{familyId}";
+    }
+
+    private sealed record RefreshTokenData(
+        long UserId,
+        string FamilyId,
+        bool IsRevoked);
 }

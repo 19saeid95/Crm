@@ -1,9 +1,7 @@
 ﻿using Crm.Application.Features.Auth.Login;
+using Crm.Application.Features.Auth.RefreshToken;
 using Crm.Application.Interfaces.Authentication;
-using Crm.Domain.Repositories;
 using MediatR;
-
-namespace Crm.Application.Features.Auth.RefreshToken;
 
 public sealed class RefreshTokenCommandHandler(
     IRefreshTokenService refreshTokenService,
@@ -15,19 +13,28 @@ public sealed class RefreshTokenCommandHandler(
         RefreshTokenCommand request,
         CancellationToken cancellationToken)
     {
-        var userId =
-            await refreshTokenService.ValidateAsync(
-                request.RefreshToken,
-                cancellationToken);
+        var token = await refreshTokenService.ValidateAsync(
+            request.RefreshToken,
+            cancellationToken);
 
-        if (userId is null)
+        if (token is null)
         {
             throw new UnauthorizedAccessException(
                 "Refresh Token نامعتبر یا منقضی شده است.");
         }
 
+        if (token.IsRevoked)
+        {
+            await refreshTokenService.RevokeFamilyAsync(
+                token.FamilyId,
+                cancellationToken);
+
+            throw new UnauthorizedAccessException(
+                "Refresh Token reuse detected.");
+        }
+
         var user = await userRepository.GetByIdAsync(
-            userId.Value,
+            token.UserId,
             cancellationToken);
 
         if (user is null || user.IsDeleted)
@@ -36,12 +43,15 @@ public sealed class RefreshTokenCommandHandler(
                 "کاربر معتبر نیست.");
         }
 
-        // Rotation:
-        // Refresh Token قبلی باطل می‌شود.
+        await refreshTokenService.RevokeAsync(
+            request.RefreshToken,
+            cancellationToken);
+
         var tokens =
-     await authenticationTokenService.GenerateAsync(
-         user,
-         cancellationToken);
+            await authenticationTokenService.GenerateAsync(
+                user,
+                token.FamilyId,
+                cancellationToken);
 
         return new LoginResponse(
             tokens.AccessToken,

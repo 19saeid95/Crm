@@ -1,8 +1,6 @@
 ﻿using Crm.Application.Interfaces.Authentication;
 using Crm.Domain.Entities;
 
-namespace Crm.Infrastructure.Authentication;
-
 public sealed class AuthenticationTokenService(
     IJwtTokenGenerator jwtTokenGenerator,
     IRefreshTokenService refreshTokenService)
@@ -10,6 +8,7 @@ public sealed class AuthenticationTokenService(
 {
     public async Task<AuthenticationTokenResult> GenerateAsync(
         User user,
+        string? refreshTokenFamilyId = null,
         CancellationToken cancellationToken = default)
     {
         var jwtToken =
@@ -18,11 +17,12 @@ public sealed class AuthenticationTokenService(
         var refreshToken =
             await refreshTokenService.CreateAsync(
                 user.Id,
+                refreshTokenFamilyId,
                 cancellationToken);
 
         return new AuthenticationTokenResult(
             jwtToken.AccessToken,
             jwtToken.ExpiresAt,
-            refreshToken);
+            refreshToken.Token);
     }
 }

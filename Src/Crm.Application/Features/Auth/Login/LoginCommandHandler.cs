@@ -37,7 +37,7 @@ public sealed class LoginCommandHandler(
         var tokens =
             await authenticationTokenService.GenerateAsync(
                 user,
-                cancellationToken);
+                cancellationToken: cancellationToken);
 
         return new LoginResponse(
             tokens.AccessToken,
