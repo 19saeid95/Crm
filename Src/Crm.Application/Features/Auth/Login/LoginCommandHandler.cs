@@ -1,12 +1,13 @@
-﻿using Crm.Application.Features.Auth.Login;
-using Crm.Application.Interfaces.Authentication;
+﻿using Crm.Application.Interfaces.Authentication;
+using Crm.Domain.Repositories;
 using MediatR;
+
+namespace Crm.Application.Features.Auth.Login;
 
 public sealed class LoginCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
-    IJwtTokenGenerator jwtTokenGenerator,
-    IRefreshTokenService refreshTokenService)
+    IAuthenticationTokenService authenticationTokenService)
     : IRequestHandler<LoginCommand, LoginResponse>
 {
     public async Task<LoginResponse> Handle(
@@ -18,28 +19,29 @@ public sealed class LoginCommandHandler(
             cancellationToken);
 
         if (user is null)
+        {
             throw new UnauthorizedAccessException(
                 "نام کاربری یا رمز عبور اشتباه است.");
+        }
 
         var passwordValid = passwordHasher.Verify(
             request.Password,
             user.PasswordHash);
 
         if (!passwordValid)
+        {
             throw new UnauthorizedAccessException(
                 "نام کاربری یا رمز عبور اشتباه است.");
+        }
 
-        var accessToken =
-            jwtTokenGenerator.GenerateToken(user);
-
-        var refreshToken =
-            await refreshTokenService.CreateAsync(
-                user.Id,
+        var tokens =
+            await authenticationTokenService.GenerateAsync(
+                user,
                 cancellationToken);
 
         return new LoginResponse(
-            accessToken,
-            DateTime.UtcNow.AddHours(1),
-            refreshToken);
+            tokens.AccessToken,
+            tokens.ExpiresAt,
+            tokens.RefreshToken);
     }
 }

@@ -8,7 +8,7 @@ namespace Crm.Application.Features.Auth.RefreshToken;
 public sealed class RefreshTokenCommandHandler(
     IRefreshTokenService refreshTokenService,
     IUserRepository userRepository,
-    IJwtTokenGenerator jwtTokenGenerator)
+    IAuthenticationTokenService authenticationTokenService)
     : IRequestHandler<RefreshTokenCommand, LoginResponse>
 {
     public async Task<LoginResponse> Handle(
@@ -38,21 +38,14 @@ public sealed class RefreshTokenCommandHandler(
 
         // Rotation:
         // Refresh Token قبلی باطل می‌شود.
-        await refreshTokenService.RevokeAsync(
-            request.RefreshToken,
-            cancellationToken);
-
-        var accessToken =
-            jwtTokenGenerator.GenerateToken(user);
-
-        var newRefreshToken =
-            await refreshTokenService.CreateAsync(
-                user.Id,
-                cancellationToken);
+        var tokens =
+     await authenticationTokenService.GenerateAsync(
+         user,
+         cancellationToken);
 
         return new LoginResponse(
-            accessToken,
-            DateTime.UtcNow.AddHours(1),
-            newRefreshToken);
+            tokens.AccessToken,
+            tokens.ExpiresAt,
+            tokens.RefreshToken);
     }
 }

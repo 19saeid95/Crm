@@ -12,7 +12,7 @@ public sealed class JwtTokenGenerator(
     IConfiguration configuration)
     : IJwtTokenGenerator
 {
-    public string GenerateToken(User user)
+    public JwtTokenResult GenerateToken(User user)
     {
         var jwtSection = configuration.GetSection("Jwt");
 
@@ -33,18 +33,32 @@ public sealed class JwtTokenGenerator(
 
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new(JwtRegisteredClaimNames.UniqueName, user.UserName),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Iat,
-                new DateTimeOffset(now).ToUnixTimeSeconds().ToString(),
+            new(
+                JwtRegisteredClaimNames.Sub,
+                user.Id.ToString()),
+
+            new(
+                JwtRegisteredClaimNames.UniqueName,
+                user.UserName),
+
+            new(
+                JwtRegisteredClaimNames.Jti,
+                Guid.NewGuid().ToString()),
+
+            new(
+                JwtRegisteredClaimNames.Iat,
+                new DateTimeOffset(now)
+                    .ToUnixTimeSeconds()
+                    .ToString(),
                 ClaimValueTypes.Integer64)
         };
 
         if (user.IsSuperAdmin)
         {
             claims.Add(
-                new Claim("IsSuperAdmin", "true"));
+                new Claim(
+                    "IsSuperAdmin",
+                    "true"));
         }
 
         var key = new SymmetricSecurityKey(
@@ -62,7 +76,12 @@ public sealed class JwtTokenGenerator(
             expires: expiresAt,
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler()
-            .WriteToken(token);
+        var accessToken =
+            new JwtSecurityTokenHandler()
+                .WriteToken(token);
+
+        return new JwtTokenResult(
+            accessToken,
+            expiresAt);
     }
 }

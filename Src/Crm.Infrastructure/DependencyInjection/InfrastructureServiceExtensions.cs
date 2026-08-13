@@ -38,6 +38,10 @@ public static class InfrastructureServiceExtensions
             IJwtTokenGenerator,
             JwtTokenGenerator>();
 
+        services.AddScoped<
+            IAuthenticationTokenService,
+            AuthenticationTokenService>();
+
         services.AddScoped<IUserRepository, UserRepository>();
 
         var redisConnectionString =

@@ -4,5 +4,9 @@ namespace Crm.Application.Interfaces.Authentication;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateToken(User user);
+    JwtTokenResult GenerateToken(User user);
 }
+
+public sealed record JwtTokenResult(
+    string AccessToken,
+    DateTime ExpiresAt);
