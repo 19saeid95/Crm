@@ -13,6 +13,9 @@ namespace Crm.Domain.Entities;
 public partial class User : BaseEntity<long>
 {
 
+    public long? ParentUserId { get; set; }
+
+
     public string? Name { get; set; }
 
 
@@ -29,6 +32,20 @@ public partial class User : BaseEntity<long>
 
 
     public bool IsSuperAdmin { get; set; }
+
+
+    public bool IsActive { get; set; }
+
+
+    public DateTime? LastLoginDate { get; set; }
+
+    public virtual Customer? Customer { get; set; }
+
+    public virtual ICollection<User>
+        InverseParentUser { get; set; }
+        = new List<User>();
+
+    public virtual User? ParentUser { get; set; }
 
     public virtual ICollection<UserRole>
         UserRoles { get; set; }

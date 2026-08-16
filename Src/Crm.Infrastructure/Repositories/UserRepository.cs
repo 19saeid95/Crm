@@ -13,7 +13,7 @@ public class UserRepository(
         CancellationToken cancellationToken = default)
     {
         return context.Users
-            .AsNoTracking()
+            //.AsNoTracking()
             .FirstOrDefaultAsync(
                 x => x.UserName == userName &&
                      !x.IsDeleted,

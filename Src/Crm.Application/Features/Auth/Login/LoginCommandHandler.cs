@@ -7,6 +7,7 @@ namespace Crm.Application.Features.Auth.Login;
 public sealed class LoginCommandHandler(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
+    IUnitOfWork unitOfWork,
     IAuthenticationTokenService authenticationTokenService)
     : IRequestHandler<LoginCommand, LoginResponse>
 {
@@ -39,6 +40,10 @@ public sealed class LoginCommandHandler(
                 user,
                 cancellationToken: cancellationToken);
 
+        user.LastLoginDate = DateTime.UtcNow;
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        //
         return new LoginResponse(
             tokens.AccessToken,
             tokens.ExpiresAt,

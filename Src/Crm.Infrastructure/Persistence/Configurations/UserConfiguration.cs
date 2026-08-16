@@ -18,12 +18,36 @@ public partial class UserConfiguration
         entity.ToTable("Users", "auth");
 
         entity.HasIndex(
+            e => e.LastName,
+            "IX_Users_LastName"
+        );
+
+        entity.HasIndex(
+            e => e.Name,
+            "IX_Users_Name"
+        );
+
+        entity.HasIndex(
+            e => e.ParentUserId,
+            "IX_Users_ParentUserId"
+        );
+
+        entity.HasIndex(
+            e => e.Phone,
+            "IX_Users_Phone"
+        );
+
+        entity.HasIndex(
             e => e.UserName,
             "UQ_Users_UserName"
         ).IsUnique();
 
         entity.Property(e => e.CreateDate)
             .HasDefaultValueSql("(getdate())", "DF_Users_CreateDate");
+        entity.Property(e => e.IsActive)
+            .HasDefaultValue(true, "DF_Users_IsActive");
+        entity.Property(e => e.LastLoginDate)
+            .HasColumnType("datetime");
         entity.Property(e => e.LastName)
             .HasMaxLength(150);
         entity.Property(e => e.Name)
@@ -34,6 +58,14 @@ public partial class UserConfiguration
             .HasMaxLength(15);
         entity.Property(e => e.UserName)
             .HasMaxLength(50);
+
+        entity.HasOne(d => d.ParentUser)
+            .WithMany(
+                p => p.InverseParentUser
+            )
+            
+            .HasForeignKey(d => d.ParentUserId)
+            .HasConstraintName("FK_Users_Users");
 
         OnConfigurePartial(entity);
     }

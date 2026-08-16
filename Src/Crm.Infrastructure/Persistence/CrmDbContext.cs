@@ -16,6 +16,12 @@ public partial class CrmDbContext : DbContext
     {
     }
 
+    public virtual DbSet<Customer>
+        Customers { get; set; }
+
+    public virtual DbSet<Location>
+        Locations { get; set; }
+
     public virtual DbSet<Permission>
         Permissions { get; set; }
 
