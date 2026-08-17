@@ -1,10 +1,13 @@
 ﻿using Crm.Application.Interfaces.Authentication;
+using Crm.Application.Interfaces.Authorization;
 using Crm.Domain.Repositories;
 using Crm.Domain.Repositories.Generics;
 using Crm.Infrastructure.Authentication;
+using Crm.Infrastructure.Authorization;
 using Crm.Infrastructure.Persistence;
 using Crm.Infrastructure.Repositories;
 using Crm.Infrastructure.Repositories.Generics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +46,16 @@ public static class InfrastructureServiceExtensions
             AuthenticationTokenService>();
 
         services.AddScoped<IUserRepository, UserRepository>();
+
+        services.AddScoped<IPermissionService, PermissionService>();
+
+        services.AddScoped<IPermissionService, PermissionService>();
+
+        services.AddScoped< IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+        services.AddSingleton<
+            IAuthorizationPolicyProvider,
+            PermissionPolicyProvider>();
 
         var redisConnectionString =
             configuration["Redis:ConnectionString"]

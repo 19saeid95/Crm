@@ -1,8 +1,10 @@
 using Crm.Api.Extensions;
 using Crm.Api.Middleware;
 using Crm.Application.DependencyInjection;
+using Crm.Infrastructure.Authorization;
 using Crm.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -42,15 +44,14 @@ builder.Services
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
 

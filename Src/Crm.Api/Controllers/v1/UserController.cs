@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Crm.Api.Controllers.V1;
 
-//[Authorize]
+[Authorize(Policy = "Permission.User.Create")]
 public class UserController(ISender sender) : BaseController
 {
     [HttpPost]
