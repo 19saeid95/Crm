@@ -1,0 +1,1373 @@
+======================================================================
+📁 ساختار پروژه: Crm
+======================================================================
+
+├── .gitattributes
+├── .github/
+│   └── workflows/
+├── .gitignore
+├── Crm.slnx
+├── deepseek_python_20260810_b46c83.py  📄
+├── Src/
+│   ├── Crm.Api/
+│   │   ├── appsettings.Development.json  📄
+│   │   ├── appsettings.json  📄
+│   │   ├── Controllers/
+│   │   │   ├── BaseController.cs  📄
+│   │   │   └── v1/
+│   │   ├── Crm.Api.csproj
+│   │   ├── Crm.Api.csproj.user
+│   │   ├── Crm.Api.http
+│   │   ├── Extensions/
+│   │   │   └── ApiVersioningExtensions.cs  📄
+│   │   └── Program.cs  📄
+│   ├── Crm.Application/
+│   │   └── Crm.Application.csproj
+│   ├── Crm.Domain/
+│   │   ├── Crm.Domain.csproj
+│   │   ├── Entities/
+│   │   │   ├── BaseEntities/
+│   │   │   │   └── BaseEntity.cs  📄
+│   │   │   ├── Customer.cs  📄
+│   │   │   ├── Location.cs  📄
+│   │   │   ├── Permission.cs  📄
+│   │   │   ├── Role.cs  📄
+│   │   │   ├── RolePermission.cs  📄
+│   │   │   ├── User.cs  📄
+│   │   │   └── UserRole.cs  📄
+│   │   └── Repositories/
+│   │       ├── Generics/
+│   │       │   └── IRepository.cs  📄
+│   │       └── IUnitOfWork.cs  📄
+│   └── Crm.Infrastructure/
+│       ├── CodeTemplates/
+│       │   └── EFCore/
+│       │       ├── DbContext.t4
+│       │       ├── EntityType.t4
+│       │       └── EntityTypeConfiguration.t4
+│       ├── Crm.Infrastructure.csproj
+│       ├── efpt.config.json  📄
+│       ├── efpt.config.json.user
+│       ├── Persistence/
+│       │   ├── Configurations/
+│       │   │   ├── CustomerConfiguration.cs  📄
+│       │   │   ├── LocationConfiguration.cs  📄
+│       │   │   ├── PermissionConfiguration.cs  📄
+│       │   │   ├── RoleConfiguration.cs  📄
+│       │   │   ├── RolePermissionConfiguration.cs  📄
+│       │   │   ├── UserConfiguration.cs  📄
+│       │   │   └── UserRoleConfiguration.cs  📄
+│       │   └── CrmDbContext.cs  📄
+│       └── Repositories/
+│           ├── Generics/
+│           │   └── Repository.cs  📄
+│           └── UnitOfWork.cs  📄
+└── Tests/
+    ├── Crm.IntegrationTests/
+    │   ├── Class1.cs  📄
+    │   └── Crm.IntegrationTests.csproj
+    └── Crm.UnitTests/
+        └── Crm.UnitTests.csproj
+
+======================================================================
+📄 محتوای فایل‌های کد
+======================================================================
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Controllers\BaseController.cs
+----------------------------------------------------------------------
+
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Crm.Api.Controllers;
+
+[ApiController]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/[controller]")]
+public abstract class BaseController : ControllerBase
+{
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Extensions\ApiVersioningExtensions.cs
+----------------------------------------------------------------------
+
+﻿using Asp.Versioning;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Crm.Api.Extensions;
+
+public static class ApiVersioningExtensions
+{
+    public static IServiceCollection AddApiVersioningConfiguration(
+        this IServiceCollection services)
+    {
+        services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1.0);
+
+            options.AssumeDefaultVersionWhenUnspecified = true;
+
+            options.ReportApiVersions = true;
+        })
+        .AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV";
+
+            options.SubstituteApiVersionInUrl = true;
+        });
+
+        return services;
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Program.cs
+----------------------------------------------------------------------
+
+using Crm.Api.Extensions;
+using Crm.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+#region Version
+builder.Services.AddApiVersioningConfiguration();
+#endregion
+
+var app = builder.Build();
+
+
+//if (app.Environment.IsDevelopment())
+//{
+app.UseSwagger();
+    app.UseSwaggerUI();
+//}
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\appsettings.Development.json
+----------------------------------------------------------------------
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\appsettings.json
+----------------------------------------------------------------------
+
+{
+  //"ConnectionStrings": {
+  //  //"CrmDb": "Server=.;Database=CrmDb;Trusted_Connection=True;TrustServerCertificate=True;"
+  //  "CrmDb": "Server=192.168.2.242,2242;Database=CrmDb;User Id=sa;Password=Eefa2026@;TrustServerCertificate=True;Encrypt=False;Connect Timeout=30;"
+  //},
+  //"Redis": {
+  //  //"ConnectionString": "localhost:6379"  
+  //  "ConnectionString": "127.0.0.1:6379,password=Redis2026@,connectTimeout=5000,syncTimeout=5000,defaultDatabase=0,abortConnect=false,ssl=false"
+  //},
+  //"Jwt": {
+  //  "Issuer": "Crm.Api",
+  //  "Audience": "Crm.Client",
+  //  "SecretKey": "d6X7kL2mP5nQ8rS3tU6vW1yZ4bC9eF0jA8hN5mR2sT7pL5kX9cV6bN4qW8rY3"
+  //},
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\BaseEntities\BaseEntity.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Domain.Entities.BaseEntites;
+
+public abstract class BaseEntity<TKey>
+{
+    public TKey Id { get; set; } = default!;
+
+    public DateTime CreateDate { get; set; }
+
+    public DateTime? LastUpdate { get; set; }
+
+    public bool IsDeleted { get; set; }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Customer.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Customer : BaseEntity<long>
+{
+
+    public long UserId { get; set; }
+
+
+    public long LocationId { get; set; }
+
+
+    public string CustomerCode { get; set; } = null!;
+
+
+    public bool IsActive { get; set; }
+
+
+    public int? PurchasePerformanceScore { get; set; }
+
+
+    public int? PurchaseMixQualityScore { get; set; }
+
+
+    public int? StoreCapacityScore { get; set; }
+
+
+    public int? LoyaltyStrategicCooperationScore { get; set; }
+
+
+    public int? ProfessionalStaffQualityScore { get; set; }
+
+
+    public int? RegionalMarketPotentialScore { get; set; }
+
+    public virtual Location Location { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Location.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Location : BaseEntity<long>
+{
+
+    public long? ParentLocationId { get; set; }
+
+
+    public string Name { get; set; } = null!;
+
+
+    public bool IsActive { get; set; }
+
+    public virtual Customer? Customer { get; set; }
+
+    public virtual ICollection<Location>
+        InverseParentLocation { get; set; }
+        = new List<Location>();
+
+    public virtual Location? ParentLocation { get; set; }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Permission.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Permission : BaseEntity<long>
+{
+
+    public string Name { get; set; } = null!;
+
+
+    public string? Description { get; set; }
+
+    public virtual ICollection<RolePermission>
+        RolePermissions { get; set; }
+        = new List<RolePermission>();
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Role.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Role : BaseEntity<long>
+{
+
+    public string Name { get; set; } = null!;
+
+
+    public string? Description { get; set; }
+
+    public virtual ICollection<RolePermission>
+        RolePermissions { get; set; }
+        = new List<RolePermission>();
+
+    public virtual ICollection<UserRole>
+        UserRoles { get; set; }
+        = new List<UserRole>();
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\RolePermission.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class RolePermission
+{
+
+    public long RoleId { get; set; }
+
+
+    public long PermissionId { get; set; }
+
+
+    public DateTime CreateDate { get; set; }
+
+    public virtual Permission Permission { get; set; } = null!;
+
+    public virtual Role Role { get; set; } = null!;
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\User.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class User : BaseEntity<long>
+{
+
+    public long? ParentUserId { get; set; }
+
+
+    public string? Name { get; set; }
+
+
+    public string? LastName { get; set; }
+
+
+    public string UserName { get; set; } = null!;
+
+
+    public string PasswordHash { get; set; } = null!;
+
+
+    public string Phone { get; set; } = null!;
+
+
+    public bool IsSuperAdmin { get; set; }
+
+
+    public bool IsActive { get; set; }
+
+
+    public DateTime? LastLoginDate { get; set; }
+
+    public virtual Customer? Customer { get; set; }
+
+    public virtual ICollection<User>
+        InverseParentUser { get; set; }
+        = new List<User>();
+
+    public virtual User? ParentUser { get; set; }
+
+    public virtual ICollection<UserRole>
+        UserRoles { get; set; }
+        = new List<UserRole>();
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\UserRole.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class UserRole
+{
+
+    public long UserId { get; set; }
+
+
+    public long RoleId { get; set; }
+
+
+    public DateTime CreateDate { get; set; }
+
+    public virtual Role Role { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Repositories\Generics\IRepository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities.BaseEntites;
+
+namespace Crm.Domain.Repositories.Generics;
+
+public interface IRepository<TEntity, TKey>
+    where TEntity : BaseEntity<TKey>
+{
+    Task<TEntity?> GetByIdAsync(
+        TKey id,
+        CancellationToken cancellationToken = default);
+
+    Task<List<TEntity>> GetAllAsync(
+        CancellationToken cancellationToken = default);
+
+    Task AddAsync(
+        TEntity entity,
+        CancellationToken cancellationToken = default);
+
+    void Update(TEntity entity);
+
+    void Remove(TEntity entity);
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Repositories\IUnitOfWork.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Domain.Repositories;
+
+public interface IUnitOfWork
+{
+    Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default);
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\CustomerConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class CustomerConfiguration
+    : IEntityTypeConfiguration<Customer>
+{
+    public void Configure(
+        EntityTypeBuilder<Customer> entity)
+    {
+        entity.ToTable("Customers", "crm");
+
+        entity.HasIndex(
+            e => e.LocationId,
+            "IX_Customers_LocationId"
+        );
+
+        entity.HasIndex(
+            e => e.CustomerCode,
+            "UX_Customers_CustomerCode"
+        ).IsUnique();
+
+        entity.HasIndex(
+            e => e.LocationId,
+            "UX_Customers_LocationId"
+        ).IsUnique();
+
+        entity.HasIndex(
+            e => e.UserId,
+            "UX_Customers_UserId"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getutcdate())", "DF_Customers_CreateDate");
+        entity.Property(e => e.CustomerCode)
+            .HasMaxLength(50);
+        entity.Property(e => e.IsActive)
+            .HasDefaultValue(true, "DF_Customers_IsActive");
+
+        entity.HasOne(d => d.Location)
+            .WithOne(
+                p => p.Customer
+            )
+            
+            .HasForeignKey<Customer>(d => d.LocationId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_Customers_Location");
+
+        entity.HasOne(d => d.User)
+            .WithOne(
+                p => p.Customer
+            )
+            
+            .HasForeignKey<Customer>(d => d.UserId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_Customers_User");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Customer> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\LocationConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class LocationConfiguration
+    : IEntityTypeConfiguration<Location>
+{
+    public void Configure(
+        EntityTypeBuilder<Location> entity)
+    {
+        entity.ToTable("Locations", "crm");
+
+        entity.HasIndex(
+            e => e.ParentLocationId,
+            "IX_Locations_ParentLocationId"
+        );
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getutcdate())", "DF_Locations_CreateDate");
+        entity.Property(e => e.IsActive)
+            .HasDefaultValue(true, "DF_Locations_IsActive");
+        entity.Property(e => e.Name)
+            .HasMaxLength(150);
+
+        entity.HasOne(d => d.ParentLocation)
+            .WithMany(
+                p => p.InverseParentLocation
+            )
+            
+            .HasForeignKey(d => d.ParentLocationId)
+            .HasConstraintName("FK_Locations_Parent");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Location> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\PermissionConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class PermissionConfiguration
+    : IEntityTypeConfiguration<Permission>
+{
+    public void Configure(
+        EntityTypeBuilder<Permission> entity)
+    {
+        entity.ToTable("Permissions", "auth");
+
+        entity.HasIndex(
+            e => e.Name,
+            "UQ_Permissions_Name"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_Permissions_CreateDate");
+        entity.Property(e => e.Description)
+            .HasMaxLength(250);
+        entity.Property(e => e.Name)
+            .HasMaxLength(150);
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Permission> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\RoleConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class RoleConfiguration
+    : IEntityTypeConfiguration<Role>
+{
+    public void Configure(
+        EntityTypeBuilder<Role> entity)
+    {
+        entity.ToTable("Roles", "auth");
+
+        entity.HasIndex(
+            e => e.Name,
+            "UQ_Roles_Name"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_Roles_CreateDate");
+        entity.Property(e => e.Description)
+            .HasMaxLength(250);
+        entity.Property(e => e.Name)
+            .HasMaxLength(100);
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Role> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\RolePermissionConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class RolePermissionConfiguration
+    : IEntityTypeConfiguration<RolePermission>
+{
+    public void Configure(
+        EntityTypeBuilder<RolePermission> entity)
+    {
+        entity.HasKey(
+            e => new { e.RoleId, e.PermissionId }
+        );
+
+        entity.ToTable("RolePermissions", "auth");
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_RolePermissions_CreateDate");
+
+        entity.HasOne(d => d.Permission)
+            .WithMany(
+                p => p.RolePermissions
+            )
+            
+            .HasForeignKey(d => d.PermissionId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_RolePermissions_Permissions");
+
+        entity.HasOne(d => d.Role)
+            .WithMany(
+                p => p.RolePermissions
+            )
+            
+            .HasForeignKey(d => d.RoleId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_RolePermissions_Roles");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<RolePermission> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\UserConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class UserConfiguration
+    : IEntityTypeConfiguration<User>
+{
+    public void Configure(
+        EntityTypeBuilder<User> entity)
+    {
+        entity.ToTable("Users", "auth");
+
+        entity.HasIndex(
+            e => e.LastName,
+            "IX_Users_LastName"
+        );
+
+        entity.HasIndex(
+            e => e.Name,
+            "IX_Users_Name"
+        );
+
+        entity.HasIndex(
+            e => e.ParentUserId,
+            "IX_Users_ParentUserId"
+        );
+
+        entity.HasIndex(
+            e => e.Phone,
+            "IX_Users_Phone"
+        );
+
+        entity.HasIndex(
+            e => e.UserName,
+            "UQ_Users_UserName"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_Users_CreateDate");
+        entity.Property(e => e.IsActive)
+            .HasDefaultValue(true, "DF_Users_IsActive");
+        entity.Property(e => e.LastLoginDate)
+            .HasColumnType("datetime");
+        entity.Property(e => e.LastName)
+            .HasMaxLength(150);
+        entity.Property(e => e.Name)
+            .HasMaxLength(50);
+        entity.Property(e => e.PasswordHash)
+            .HasMaxLength(255);
+        entity.Property(e => e.Phone)
+            .HasMaxLength(15);
+        entity.Property(e => e.UserName)
+            .HasMaxLength(50);
+
+        entity.HasOne(d => d.ParentUser)
+            .WithMany(
+                p => p.InverseParentUser
+            )
+            
+            .HasForeignKey(d => d.ParentUserId)
+            .HasConstraintName("FK_Users_Users");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<User> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\UserRoleConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class UserRoleConfiguration
+    : IEntityTypeConfiguration<UserRole>
+{
+    public void Configure(
+        EntityTypeBuilder<UserRole> entity)
+    {
+        entity.HasKey(
+            e => new { e.UserId, e.RoleId }
+        );
+
+        entity.ToTable("UserRoles", "auth");
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_UserRoles_CreateDate");
+
+        entity.HasOne(d => d.Role)
+            .WithMany(
+                p => p.UserRoles
+            )
+            
+            .HasForeignKey(d => d.RoleId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_UserRoles_Roles");
+
+        entity.HasOne(d => d.User)
+            .WithMany(
+                p => p.UserRoles
+            )
+            
+            .HasForeignKey(d => d.UserId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_UserRoles_Users");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<UserRole> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\CrmDbContext.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Crm.Infrastructure.Persistence;
+
+public partial class CrmDbContext : DbContext
+{
+    public CrmDbContext(
+        DbContextOptions<CrmDbContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Customer>
+        Customers { get; set; }
+
+    public virtual DbSet<Location>
+        Locations { get; set; }
+
+    public virtual DbSet<Permission>
+        Permissions { get; set; }
+
+    public virtual DbSet<Role>
+        Roles { get; set; }
+
+    public virtual DbSet<RolePermission>
+        RolePermissions { get; set; }
+
+    public virtual DbSet<User>
+        Users { get; set; }
+
+    public virtual DbSet<UserRole>
+        UserRoles { get; set; }
+
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(CrmDbContext).Assembly);
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(
+        ModelBuilder modelBuilder);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Repositories\Generics\Repository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities.BaseEntites;
+using Crm.Domain.Repositories.Generics;
+using Crm.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace Crm.Infrastructure.Repositories.Generics;
+
+public class Repository<TEntity, TKey>(
+    CrmDbContext context)
+    : IRepository<TEntity, TKey>
+    where TEntity : BaseEntity<TKey>
+{
+    protected readonly CrmDbContext Context = context;
+
+    protected readonly DbSet<TEntity> DbSet =
+        context.Set<TEntity>();
+
+    public async Task<TEntity?> GetByIdAsync(
+        TKey id,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet.FindAsync(
+            [id],
+            cancellationToken);
+    }
+
+    public async Task<List<TEntity>> GetAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .Where(x => !x.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task AddAsync(
+        TEntity entity,
+        CancellationToken cancellationToken = default)
+    {
+        await DbSet.AddAsync(
+            entity,
+            cancellationToken);
+    }
+
+    public void Update(TEntity entity)
+    {
+        DbSet.Update(entity);
+    }
+
+    public void Remove(TEntity entity)
+    {
+        entity.IsDeleted = true;
+        DbSet.Update(entity);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Repositories\UnitOfWork.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Repositories;
+using Crm.Infrastructure.Persistence;
+
+namespace Crm.Infrastructure.Repositories;
+
+public class UnitOfWork(
+    CrmDbContext context) : IUnitOfWork
+{
+    public async Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await context.SaveChangesAsync(
+            cancellationToken);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\efpt.config.json
+----------------------------------------------------------------------
+
+﻿{
+   "CodeGenerationMode": 6,
+   "ContextClassName": "CrmDbContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "IrregularWords": null,
+   "MinimumProductVersion": "2.6.1676",
+   "ModelNamespace": null,
+   "OutputContextPath": "Persistence",
+   "OutputPath": "..\\Crm.Domain\\Entities",
+   "PluralRules": null,
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "Crm.Infrastructure",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 4,
+   "SelectedToBeGenerated": 0,
+   "SingularRules": null,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[auth].[Permissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[RolePermissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[Roles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[UserRoles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[Users]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[crm].[Customers]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[crm].[Locations]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": true,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": true,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": true,
+   "UseTypedTvpParameters": true
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Tests\Crm.IntegrationTests\Class1.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.IntegrationTests
+{
+    public class Class1
+    {
+
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: deepseek_python_20260810_b46c83.py
+----------------------------------------------------------------------
+
+import os
+import sys
+from pathlib import Path
+
+# ===== تنظیمات =====
+# پوشه‌هایی که نباید اسکن شوند
+EXCLUDE_DIRS = {
+    'bin', 'obj', 'node_modules', 'venv', '.venv', '__pycache__',
+    '.git', '.vs', '.vscode', 'packages', 'wwwroot', 'dist', 'build',
+    'Migrations', 'migrations', 'Properties'
+}
+
+# پسوند فایل‌های کدی که محتوایشان نمایش داده شود
+INCLUDE_EXTENSIONS = {
+    '.cs', '.vb', '.fs', '.xaml', '.xml', '.json', '.config',
+    '.cshtml', '.razor', '.js', '.ts', '.jsx', '.tsx',
+    '.css', '.scss', '.sql', '.py', '.java', '.cpp', '.h'
+}
+
+# حداکثر اندازه فایل (بایت) - فایل‌های بزرگتر رد می‌شوند
+MAX_FILE_SIZE = 1024 * 100  # 100 KB
+
+# ============================================
+
+def get_tree_structure(root_dir, prefix="", is_last=True):
+    """ایجاد درخت پوشه به صورت متن"""
+    lines = []
+    items = sorted([p for p in root_dir.iterdir() if p.name not in EXCLUDE_DIRS])
+    
+    for i, item in enumerate(items):
+        is_last_item = (i == len(items) - 1)
+        connector = "└── " if is_last_item else "├── "
+        
+        if item.is_dir():
+            lines.append(f"{prefix}{connector}{item.name}/")
+            extension = "    " if is_last_item else "│   "
+            lines.extend(get_tree_structure(item, prefix + extension, is_last_item))
+        else:
+            if item.suffix.lower() in INCLUDE_EXTENSIONS:
+                lines.append(f"{prefix}{connector}{item.name}  📄")
+            else:
+                lines.append(f"{prefix}{connector}{item.name}")
+    
+    return lines
+
+def collect_file_contents(root_dir):
+    """جمع‌آوری محتوای فایل‌های کد"""
+    contents = []
+    
+    for file_path in root_dir.rglob('*'):
+        # بررسی پوشه‌های استثنا
+        if any(excluded in file_path.parts for excluded in EXCLUDE_DIRS):
+            continue
+        
+        if file_path.is_file():
+            ext = file_path.suffix.lower()
+            if ext in INCLUDE_EXTENSIONS:
+                try:
+                    size = file_path.stat().st_size
+                    if size <= MAX_FILE_SIZE:
+                        relative_path = file_path.relative_to(root_dir)
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        contents.append({
+                            'path': str(relative_path),
+                            'content': content,
+                            'ext': ext
+                        })
+                    else:
+                        relative_path = file_path.relative_to(root_dir)
+                        contents.append({
+                            'path': str(relative_path),
+                            'content': f'[فایل بزرگتر از {MAX_FILE_SIZE/1024:.0f}KB - محتوا نمایش داده نشد]',
+                            'ext': ext
+                        })
+                except (UnicodeDecodeError, PermissionError):
+                    # فایل باینری یا بدون دسترسی
+                    relative_path = file_path.relative_to(root_dir)
+                    contents.append({
+                        'path': str(relative_path),
+                        'content': '[فایل باینری یا قابل خواندن نیست]',
+                        'ext': ext
+                    })
+    
+    return contents
+
+def generate_output(root_dir):
+    """تولید فایل خروجی"""
+    root_name = root_dir.name
+    
+    # بخش ۱: درخت پوشه
+    output = []
+    output.append("=" * 70)
+    output.append(f"📁 ساختار پروژه: {root_name}")
+    output.append("=" * 70)
+    output.append("")
+    output.extend(get_tree_structure(root_dir))
+    output.append("")
+    output.append("=" * 70)
+    output.append("📄 محتوای فایل‌های کد")
+    output.append("=" * 70)
+    output.append("")
+    
+    # بخش ۲: محتوای فایل‌ها
+    files = collect_file_contents(root_dir)
+    
+    # مرتب‌سازی بر اساس مسیر
+    files.sort(key=lambda x: x['path'])
+    
+    for file_info in files:
+        output.append("")
+        output.append("-" * 70)
+        output.append(f"📄 فایل: {file_info['path']}")
+        output.append("-" * 70)
+        output.append("")
+        output.append(file_info['content'])
+        output.append("")
+    
+    return "\n".join(output)
+
+def main():
+    # پوشه فعلی (جایی که اسکریپت اجرا می‌شود)
+    root_dir = Path.cwd()
+    
+    # درخواست مسیر سفارشی (اختیاری)
+    print(f"پوشه فعلی: {root_dir}")
+    custom_path = input("برای استفاده از مسیر دیگر وارد کنید (یا Enter برای ادامه): ").strip()
+    if custom_path:
+        root_dir = Path(custom_path)
+        if not root_dir.exists():
+            print(f"❌ مسیر '{root_dir}' وجود ندارد!")
+            return
+    
+    print(f"\n🔍 در حال اسکن: {root_dir}")
+    
+    # تولید خروجی
+    output_text = generate_output(root_dir)
+    
+    # ذخیره در فایل
+    output_file = root_dir / "project_structure.txt"
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(output_text)
+    
+    print(f"\n✅ فایل خروجی در {output_file} ذخیره شد.")
+    print(f"📊 تعداد کل فایل‌های کد: {len([p for p in root_dir.rglob('*') if p.is_file() and p.suffix.lower() in INCLUDE_EXTENSIONS])}")
+
+if __name__ == "__main__":
+    main()
