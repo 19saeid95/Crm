@@ -20,8 +20,4 @@
     <ProjectReference Include="..\Crm.Infrastructure\Crm.Infrastructure.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\v1\" />
-  </ItemGroup>
-
 </Project>

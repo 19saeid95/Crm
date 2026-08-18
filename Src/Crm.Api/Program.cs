@@ -1,9 +1,6 @@
 using Crm.Api.Extensions;
+using Crm.Api.Middleware;
 using Crm.Application.Extensions;
-using Crm.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +17,9 @@ builder.Services.AddApplication(builder.Configuration);
 
 var app = builder.Build();
 
+#region Middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
+#endregion
 
 //if (app.Environment.IsDevelopment())
 //{
