@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 using System.Text;
 
 public static class InfrastructureServiceExtensions
@@ -50,6 +51,16 @@ public static class InfrastructureServiceExtensions
 
             });
         #endregion
+      
+        #region redis
+        var connectionString = configuration.GetConnectionString("Redis");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("Redis connection string is not configured.");
+
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
+
+        #endregion
+
         return services;
     }
 }
