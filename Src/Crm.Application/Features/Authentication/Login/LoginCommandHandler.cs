@@ -1,11 +1,12 @@
 ﻿using Crm.Application.Common.Exceptions;
+using Crm.Application.Contracts.Authentication;
 using Crm.Domain.Repositories;
 using Crm.Domain.Services;
 using MediatR;
 
 namespace Crm.Application.Features.Authentication.Login;
 
-public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)
+public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher,IJwtTokenGenerator jwtTokenGenerator)
     : IRequestHandler<LoginCommand, LoginResponse>
 {
     public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -22,6 +23,8 @@ public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher
         if (!passwordValid)
             throw new UnauthorizedException("نام کاربری یا رمز عبور اشتباه است.");
 
-        return new LoginResponse(user.Id, user.UserName);
+        var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
+
+        return new LoginResponse(user.Id, user.UserName,accessToken);
     }
 }
