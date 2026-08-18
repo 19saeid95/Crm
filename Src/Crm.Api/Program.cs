@@ -1,4 +1,5 @@
 using Crm.Api.Extensions;
+using Crm.Application.Extensions;
 using Crm.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -13,6 +14,9 @@ builder.Services.AddSwaggerGen();
 #region Version
 builder.Services.AddApiVersioningConfiguration();
 #endregion
+
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(builder.Configuration);
 
 var app = builder.Build();
 

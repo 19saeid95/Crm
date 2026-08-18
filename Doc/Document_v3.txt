@@ -2,7 +2,7 @@
 📌 مستند راهنمای پیاده‌سازی Backend پروژه CRM با معماری ساده Clean Architecture
 ================================================================================
 
-نسخه: 1.0
+نسخه: 1.1
 تاریخ: 2026-08-17
 وضعیت: در حال توسعه (هر بار آپدیت می‌شود)
 
@@ -183,6 +183,12 @@ Moq                  4+      Mocking در تست‌ها
 [ ] پیاده‌سازی MappingProfile (AutoMapper)
 [ ] تنظیم DI در ApplicationServiceExtensions
 
+یک نکته=ValidationBehavior از خطا جلوگیری می‌کند
+Global Exception Middleware خطاهای پیش‌بینی‌نشده را مدیریت می‌کند
+Validator	اعتبارسنجی اختصاصی هر کامند
+ValidationBehavior	لایه سرتاسری اعتبارسنجی قبل از Handler
+Global Exception Middleware	لایه سرتاسری مدیریت خطاها بعد از وقوع خطا
+
 🔹 مرحله 5: پیاده‌سازی API Layer
 ------------------------------------------------------------
 [ ] پیاده‌سازی BaseController
@@ -223,6 +229,30 @@ Moq                  4+      Mocking در تست‌ها
 12. از Microsoft.Extensions.DependencyInjection (نسخه سازگار با .NET 10) برای DI استفاده شود
 13. Secrets و Connection Strings هرگز در Git Commit نشوند (استفاده از User Secrets یا Environment Variables)
 
+
+================================================================================
+🔐 تصمیم فنی: Password Hashing
+================================================================================
+
+روش انتخاب‌شده برای Password Hashing: Microsoft.AspNetCore.Identity.PasswordHasher<User>
+
+دلیل انتخاب:
+- پیاده‌سازی استاندارد Password Hashing در ASP.NET Core Identity است.
+- دارای API استاندارد برای HashPassword و VerifyHashedPassword است.
+- از نگهداری رمز عبور خام جلوگیری می‌کند.
+- منطق Hashing در Infrastructure قرار می‌گیرد و Application فقط به abstraction یعنی IPasswordHasher وابسته است.
+- در صورت نیاز به تغییر پیاده‌سازی در آینده، Login Use-Case نیاز به تغییر نخواهد داشت.
+
+ساختار: 
+Application/Domain → IPasswordHasher
+Infrastructure → PasswordHasher : IPasswordHasher
+
+نکته: PasswordHash فقط در فیلد User.PasswordHash ذخیره می‌شود و Password خام هرگز ذخیره نمی‌شود.
+
+مرجع رسمی: Microsoft Learn - PasswordHasher<TUser> در ASP.NET Core/.NET 10
+
+================================================================================
+
 ================================================================================
 📌 تاریخچه تغییرات
 ================================================================================
@@ -236,5 +266,6 @@ Moq                  4+      Mocking در تست‌ها
 - اضافه کردن OTP به جریان احراز هویت
 - تنظیم چک‌لیست مراحل پیاده‌سازی
 - **تأکید بر .NET 10 به عنوان مرجع اصلی پروژه**
+- انتخاب Microsoft.AspNetCore.Identity.PasswordHasher<User> برای Password Hashing
 
 ================================================================================
