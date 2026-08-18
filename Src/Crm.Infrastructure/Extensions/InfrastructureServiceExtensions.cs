@@ -26,6 +26,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
 
         #region Jwt
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));

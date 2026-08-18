@@ -6,7 +6,8 @@ using MediatR;
 
 namespace Crm.Application.Features.Authentication.Login;
 
-public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher,IJwtTokenGenerator jwtTokenGenerator)
+public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher,
+    IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator, IRefreshTokenStore refreshTokenStore)
     : IRequestHandler<LoginCommand, LoginResponse>
 {
     public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -25,6 +26,10 @@ public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher
 
         var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
 
-        return new LoginResponse(user.Id, user.UserName,accessToken);
+        var refreshToken = refreshTokenGenerator.Generate();
+
+        await refreshTokenStore.StoreAsync(refreshToken.Token, user.Id, refreshToken.ExpiresAtUtc, cancellationToken);
+
+        return new LoginResponse(user.Id, user.UserName, accessToken, refreshToken.Token);
     }
 }
