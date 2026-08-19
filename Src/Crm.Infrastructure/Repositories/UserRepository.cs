@@ -12,6 +12,11 @@ public class UserRepository(CrmDbContext context) : IUserRepository
         await context.Users.AddAsync(user, cancellationToken);
     }
 
+    public async Task<User?> GetByPhoneAsync(string phone, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.FirstOrDefaultAsync(user => user.Phone == phone && !user.IsDeleted, cancellationToken);
+    }
+
     public async Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default)
     {
         return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == false, cancellationToken);

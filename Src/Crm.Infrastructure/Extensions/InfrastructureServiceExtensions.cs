@@ -33,6 +33,11 @@ public static class InfrastructureServiceExtensions
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
+        #region Otp
+        // services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));
+        services.AddScoped<IOtpService, OtpService>();
+        #endregion
+
         #region Jwt
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
