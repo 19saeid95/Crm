@@ -14,8 +14,9 @@ public sealed class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenG
     {
         var claims = new[]
         {
-            new Claim( JwtRegisteredClaimNames.Sub,userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.UniqueName, userName)
+             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+             new Claim(ClaimTypes.Name, userName)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));

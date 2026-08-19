@@ -8,6 +8,9 @@
 ├── .gitignore
 ├── Crm.slnx
 ├── deepseek_python_20260810_b46c83.py  📄
+├── Doc/
+│   ├── CurentProject_v1.txt
+│   └── Document_v3.txt
 ├── Src/
 │   ├── Crm.Api/
 │   │   ├── appsettings.Development.json  📄
@@ -15,14 +18,42 @@
 │   │   ├── Controllers/
 │   │   │   ├── BaseController.cs  📄
 │   │   │   └── v1/
+│   │   │       └── AuthController.cs  📄
 │   │   ├── Crm.Api.csproj
 │   │   ├── Crm.Api.csproj.user
 │   │   ├── Crm.Api.http
 │   │   ├── Extensions/
 │   │   │   └── ApiVersioningExtensions.cs  📄
+│   │   ├── Middleware/
+│   │   │   └── GlobalExceptionMiddleware.cs  📄
 │   │   └── Program.cs  📄
 │   ├── Crm.Application/
-│   │   └── Crm.Application.csproj
+│   │   ├── Common/
+│   │   │   ├── Behaviors/
+│   │   │   │   └── ValidationBehavior.cs  📄
+│   │   │   └── Exceptions/
+│   │   │       ├── ForbiddenException.cs  📄
+│   │   │       └── UnauthorizedException.cs  📄
+│   │   ├── Contracts/
+│   │   │   └── Authentication/
+│   │   │       ├── IJwtTokenGenerator.cs  📄
+│   │   │       ├── IRefreshTokenGenerator.cs  📄
+│   │   │       └── IRefreshTokenStore.cs  📄
+│   │   ├── Crm.Application.csproj
+│   │   ├── Extensions/
+│   │   │   └── ApplicationServiceExtensions.cs  📄
+│   │   └── Features/
+│   │       └── Authentication/
+│   │           ├── Login/
+│   │           │   ├── LoginCommand.cs  📄
+│   │           │   ├── LoginCommandHandler.cs  📄
+│   │           │   ├── LoginCommandValidator.cs  📄
+│   │           │   └── LoginResponse.cs  📄
+│   │           └── RefreshToken/
+│   │               ├── RefreshTokenCommand.cs  📄
+│   │               ├── RefreshTokenCommandHandler.cs  📄
+│   │               ├── RefreshTokenCommandValidator.cs  📄
+│   │               └── RefreshTokenResponse.cs  📄
 │   ├── Crm.Domain/
 │   │   ├── Crm.Domain.csproj
 │   │   ├── Entities/
@@ -35,11 +66,20 @@
 │   │   │   ├── RolePermission.cs  📄
 │   │   │   ├── User.cs  📄
 │   │   │   └── UserRole.cs  📄
-│   │   └── Repositories/
-│   │       ├── Generics/
-│   │       │   └── IRepository.cs  📄
-│   │       └── IUnitOfWork.cs  📄
+│   │   ├── Repositories/
+│   │   │   ├── Generics/
+│   │   │   │   └── IRepository.cs  📄
+│   │   │   ├── IUnitOfWork.cs  📄
+│   │   │   └── IUserRepository.cs  📄
+│   │   └── Services/
+│   │       └── IPasswordHasher.cs  📄
 │   └── Crm.Infrastructure/
+│       ├── Authentication/
+│       │   ├── JwtOptions.cs  📄
+│       │   ├── JwtTokenGenerator.cs  📄
+│       │   ├── RefreshTokenGenerator.cs  📄
+│       │   ├── RefreshTokenHasher.cs  📄
+│       │   └── RefreshTokenStore.cs  📄
 │       ├── CodeTemplates/
 │       │   └── EFCore/
 │       │       ├── DbContext.t4
@@ -47,7 +87,8 @@
 │       │       └── EntityTypeConfiguration.t4
 │       ├── Crm.Infrastructure.csproj
 │       ├── efpt.config.json  📄
-│       ├── efpt.config.json.user
+│       ├── Extensions/
+│       │   └── InfrastructureServiceExtensions.cs  📄
 │       ├── Persistence/
 │       │   ├── Configurations/
 │       │   │   ├── CustomerConfiguration.cs  📄
@@ -58,10 +99,13 @@
 │       │   │   ├── UserConfiguration.cs  📄
 │       │   │   └── UserRoleConfiguration.cs  📄
 │       │   └── CrmDbContext.cs  📄
-│       └── Repositories/
-│           ├── Generics/
-│           │   └── Repository.cs  📄
-│           └── UnitOfWork.cs  📄
+│       ├── Repositories/
+│       │   ├── Generics/
+│       │   │   └── Repository.cs  📄
+│       │   ├── UnitOfWork.cs  📄
+│       │   └── UserRepository.cs  📄
+│       └── Services/
+│           └── PasswordHasher.cs  📄
 └── Tests/
     ├── Crm.IntegrationTests/
     │   ├── Class1.cs  📄
@@ -89,6 +133,37 @@ namespace Crm.Api.Controllers;
 public abstract class BaseController : ControllerBase
 {
 }
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Controllers\v1\AuthController.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Features.Authentication.Login;
+using Crm.Application.Features.Authentication.RefreshToken;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Crm.Api.Controllers.v1;
+
+public class AuthController(ISender sender) : BaseController
+{
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult<RefreshTokenResponse>> Refresh([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return Ok(result);
+    }
+}
+
+
 
 
 ----------------------------------------------------------------------
@@ -126,14 +201,108 @@ public static class ApiVersioningExtensions
 
 
 ----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Middleware\GlobalExceptionMiddleware.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Exceptions;
+using FluentValidation;
+
+namespace Crm.Api.Middleware;
+
+public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
+{
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await next(context);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Unhandled exception occurred.");
+            await HandleExceptionAsync(context, exception);
+        }
+    }
+
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        context.Response.ContentType = "application/json";
+        switch (exception)
+        {
+            case ValidationException validationException:
+
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+                var errors = validationException.Errors.GroupBy(x => x.PropertyName).ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .Select(x => x.ErrorMessage)
+                            .ToArray());
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 400,
+                        message = "اطلاعات وارد شده معتبر نیست.",
+                        errors
+                    });
+
+                return;
+
+            case UnauthorizedException:
+
+                context.Response.StatusCode =StatusCodes.Status401Unauthorized;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 401,
+                        message = exception.Message
+                    });
+
+                return;
+
+            case ForbiddenException:
+
+                context.Response.StatusCode =StatusCodes.Status403Forbidden;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 403,
+                        message = exception.Message
+                    });
+
+                return;
+
+            default:
+
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 500,
+                        message = "خطای داخلی سرور رخ داده است."
+                    });
+
+                return;
+        }
+    }
+}
+
+
+----------------------------------------------------------------------
 📄 فایل: Src\Crm.Api\Program.cs
 ----------------------------------------------------------------------
 
 using Crm.Api.Extensions;
-using Crm.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Crm.Api.Middleware;
+using Crm.Application.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -145,8 +314,14 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddApiVersioningConfiguration();
 #endregion
 
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(builder.Configuration);
+
 var app = builder.Build();
 
+#region Middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
+#endregion
 
 //if (app.Environment.IsDevelopment())
 //{
@@ -184,19 +359,18 @@ app.Run();
 ----------------------------------------------------------------------
 
 {
-  //"ConnectionStrings": {
-  //  //"CrmDb": "Server=.;Database=CrmDb;Trusted_Connection=True;TrustServerCertificate=True;"
-  //  "CrmDb": "Server=192.168.2.242,2242;Database=CrmDb;User Id=sa;Password=Eefa2026@;TrustServerCertificate=True;Encrypt=False;Connect Timeout=30;"
-  //},
-  //"Redis": {
-  //  //"ConnectionString": "localhost:6379"  
-  //  "ConnectionString": "127.0.0.1:6379,password=Redis2026@,connectTimeout=5000,syncTimeout=5000,defaultDatabase=0,abortConnect=false,ssl=false"
-  //},
-  //"Jwt": {
-  //  "Issuer": "Crm.Api",
-  //  "Audience": "Crm.Client",
-  //  "SecretKey": "d6X7kL2mP5nQ8rS3tU6vW1yZ4bC9eF0jA8hN5mR2sT7pL5kX9cV6bN4qW8rY3"
-  //},
+  "ConnectionStrings": {
+    //"CrmDb": "Server=.;Database=CrmDb;Trusted_Connection=True;TrustServerCertificate=True;",
+    "CrmDb": "Server=192.168.2.242,2242;Database=CrmDb;User Id=sa;Password=Eefa2026@;TrustServerCertificate=True;Encrypt=False;Connect Timeout=30;",
+
+    //"Redis": "localhost:6379"
+    "Redis": "127.0.0.1:6379,password=Redis2026@,connectTimeout=5000,syncTimeout=5000,defaultDatabase=0,abortConnect=false,ssl=false"
+  },
+  "Jwt": {
+    "Issuer": "Crm.Api",
+    "Audience": "Crm.Client",
+    "SecretKey": "d6X7kL2mP5nQ8rS3tU6vW1yZ4bC9eF0jA8hN5mR2sT7pL5kX9cV6bN4qW8rY3"
+  },
 
   "Logging": {
     "LogLevel": {
@@ -207,6 +381,306 @@ app.Run();
   "AllowedHosts": "*"
 }
 
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Behaviors\ValidationBehavior.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+using MediatR;
+
+namespace Crm.Application.Common.Behaviors;
+
+public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
+    : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+{
+    public async Task<TResponse> Handle(TRequest request,RequestHandlerDelegate<TResponse> next,CancellationToken cancellationToken)
+    {
+        if (validators.Any())
+        {
+            var context = new ValidationContext<TRequest>(request);
+
+            var validationResults = await Task.WhenAll(
+                validators.Select(
+                    validator => validator.ValidateAsync(
+                        context,
+                        cancellationToken)));
+
+            var errors = validationResults
+                .SelectMany(result => result.Errors)
+                .Where(error => error is not null)
+                .ToList();
+
+            if (errors.Count != 0)
+            {
+                throw new ValidationException(errors);
+            }
+        }
+
+        return await next();
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Exceptions\ForbiddenException.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Common.Exceptions;
+
+public sealed class ForbiddenException(string message) : Exception(message);
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Exceptions\UnauthorizedException.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Common.Exceptions;
+
+public sealed class UnauthorizedException(string message) : Exception(message);
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Contracts\Authentication\IJwtTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Contracts.Authentication;
+
+public interface IJwtTokenGenerator
+{
+    string GenerateToken(long userId, string userName);
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Contracts\Authentication\IRefreshTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Contracts.Authentication;
+
+public interface IRefreshTokenGenerator
+{
+    RefreshTokenData Generate();
+}
+
+public sealed record RefreshTokenData(string Token, DateTime ExpiresAtUtc);
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Contracts\Authentication\IRefreshTokenStore.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Contracts.Authentication;
+
+public interface IRefreshTokenStore
+{
+    Task StoreAsync(string refreshToken, long userId, DateTime expiresAtUtc, CancellationToken cancellationToken = default);
+
+    Task<long?> GetUserIdAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    Task RemoveAsync(string refreshToken, CancellationToken cancellationToken = default);
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Extensions\ApplicationServiceExtensions.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Behaviors;
+using FluentValidation;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Crm.Application.Extensions;
+
+public static class ApplicationServiceExtensions
+{
+    public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddMediatR(configuration =>
+        {
+            configuration.RegisterServicesFromAssemblies(typeof(ApplicationServiceExtensions).Assembly);
+            configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
+        services.AddValidatorsFromAssembly(typeof(ApplicationServiceExtensions).Assembly);
+
+        return services;
+    }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginCommand.cs
+----------------------------------------------------------------------
+
+﻿using MediatR;
+
+namespace Crm.Application.Features.Authentication.Login;
+
+public record LoginCommand(string UserName, string Password) : IRequest<LoginResponse>;
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginCommandHandler.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Exceptions;
+using Crm.Application.Contracts.Authentication;
+using Crm.Domain.Repositories;
+using Crm.Domain.Services;
+using MediatR;
+
+namespace Crm.Application.Features.Authentication.Login;
+
+public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher,
+    IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator, IRefreshTokenStore refreshTokenStore)
+    : IRequestHandler<LoginCommand, LoginResponse>
+{
+    public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+    {
+        var user = await userRepository.GetByUserNameAsync(request.UserName, cancellationToken);
+
+        if (user is null)
+            throw new UnauthorizedException("نام کاربری یا رمز عبور اشتباه است.");
+
+        if (!user.IsActive)
+            throw new UnauthorizedException("حساب کاربری غیرفعال است.");
+
+        var passwordValid = passwordHasher.Verify(request.Password, user.PasswordHash);
+        if (!passwordValid)
+            throw new UnauthorizedException("نام کاربری یا رمز عبور اشتباه است.");
+
+        var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
+
+        var refreshToken = refreshTokenGenerator.Generate();
+
+        await refreshTokenStore.StoreAsync(refreshToken.Token, user.Id, refreshToken.ExpiresAtUtc, cancellationToken);
+
+        return new LoginResponse(user.Id, user.UserName, accessToken, refreshToken.Token);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginCommandValidator.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+
+namespace Crm.Application.Features.Authentication.Login;
+
+public class LoginCommandValidator : AbstractValidator<LoginCommand>
+{
+    public LoginCommandValidator()
+    {
+        RuleFor(x => x.UserName).NotEmpty().MaximumLength(100).MinimumLength(1);
+        RuleFor(x => x.Password).NotEmpty();
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginResponse.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Features.Authentication.Login;
+
+public record LoginResponse(long UserId, string UserName, string AccessToken, string RefreshToken);
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenCommand.cs
+----------------------------------------------------------------------
+
+﻿using MediatR;
+
+namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public sealed record RefreshTokenCommand(string RefreshToken) : IRequest<RefreshTokenResponse>;
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenCommandHandler.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Exceptions;
+using Crm.Application.Contracts.Authentication;
+using Crm.Domain.Repositories;
+using MediatR;
+
+namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public class RefreshTokenCommandHandler(IRefreshTokenStore refreshTokenStore, IUserRepository userRepository
+    , IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator)
+    : IRequestHandler<RefreshTokenCommand, RefreshTokenResponse>
+{
+    public async Task<RefreshTokenResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    {
+        var userId = await refreshTokenStore.GetUserIdAsync(request.RefreshToken, cancellationToken);
+
+        if (userId is null)
+            throw new UnauthorizedException("Refresh Token نامعتبر یا منقضی شده است.");
+
+        var user = await userRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+
+        if (user is null || !user.IsActive)
+            throw new UnauthorizedException("کاربر معتبر نیست.");
+
+        var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
+
+        var newRefreshToken = refreshTokenGenerator.Generate();
+
+        await refreshTokenStore.RemoveAsync(request.RefreshToken, cancellationToken);
+
+        await refreshTokenStore.StoreAsync(
+            newRefreshToken.Token,
+            user.Id,
+            newRefreshToken.ExpiresAtUtc,
+            cancellationToken);
+
+        return new RefreshTokenResponse(accessToken, newRefreshToken.Token);
+    }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenCommandValidator.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+
+namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public sealed class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
+{
+    public RefreshTokenCommandValidator()
+    {
+        RuleFor(x => x.RefreshToken)
+                  .NotEmpty()
+                  .WithMessage("Refresh Token الزامی است.");
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenResponse.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public sealed record RefreshTokenResponse(string AccessToken, string RefreshToken);
 
 
 ----------------------------------------------------------------------
@@ -559,6 +1033,266 @@ public interface IUnitOfWork
     Task<int> SaveChangesAsync(
         CancellationToken cancellationToken = default);
 }
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Repositories\IUserRepository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities;
+
+namespace Crm.Domain.Repositories;
+
+public interface IUserRepository
+{
+    Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
+    Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Services\IPasswordHasher.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Domain.Services;
+
+public interface IPasswordHasher
+{
+    string Hash(string password);
+    bool Verify(string password, string passwordHash);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\JwtOptions.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Infrastructure.Authentication;
+
+public sealed class JwtOptions
+{
+    public const string SectionName = "Jwt";
+
+    public string Issuer { get; set; } = string.Empty;
+
+    public string Audience { get; set; } = string.Empty;
+
+    public string SecretKey { get; set; } = string.Empty;
+
+    public int AccessTokenExpirationMinutes { get; set; } = 60;
+
+    public int RefreshTokenExpirationDays { get; set; } = 7;
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\JwtTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Crm.Application.Contracts.Authentication;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Crm.Infrastructure.Authentication;
+
+public sealed class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerator
+{
+    private readonly JwtOptions _options = options.Value;
+    public string GenerateToken(long userId, string userName)
+    {
+        var claims = new[]
+        {
+            new Claim( JwtRegisteredClaimNames.Sub,userId.ToString()),
+            new Claim(JwtRegisteredClaimNames.UniqueName, userName)
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
+
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var expires = DateTime.UtcNow.AddMinutes(_options.AccessTokenExpirationMinutes);
+
+        var token = new JwtSecurityToken(
+            issuer: _options.Issuer,
+            audience: _options.Audience,
+            claims: claims,
+            expires: expires,
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\RefreshTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿using System.Security.Cryptography;
+using Crm.Application.Contracts.Authentication;
+using Microsoft.Extensions.Options;
+
+namespace Crm.Infrastructure.Authentication;
+
+public sealed class RefreshTokenGenerator(IOptions<JwtOptions> options)
+    : IRefreshTokenGenerator
+{
+    public RefreshTokenData Generate()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(64);
+
+        var token = Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
+        var expiresAtUtc =DateTime.UtcNow.AddDays(options.Value.RefreshTokenExpirationDays);
+
+        return new RefreshTokenData(token,expiresAtUtc);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\RefreshTokenHasher.cs
+----------------------------------------------------------------------
+
+﻿using System.Security.Cryptography;
+using System.Text;
+
+namespace Crm.Infrastructure.Authentication;
+
+internal static class RefreshTokenHasher
+{
+    public static string Hash(string refreshToken)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
+        return Convert.ToHexString(bytes);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\RefreshTokenStore.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Contracts.Authentication;
+using StackExchange.Redis;
+
+namespace Crm.Infrastructure.Authentication;
+
+public class RefreshTokenStore(IConnectionMultiplexer redis) : IRefreshTokenStore
+{
+    private const string KeyPrefix = "refresh-token:";
+    public async Task<long?> GetUserIdAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = RefreshTokenHasher.Hash(refreshToken);
+        var database = redis.GetDatabase();
+        var key = KeyPrefix + tokenHash;
+        var value = await database.StringGetAsync(key);
+        if (!value.HasValue)
+            return null;
+
+        return long.Parse(value!);
+    }
+
+    public async Task RemoveAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var tokenHash =RefreshTokenHasher.Hash(refreshToken);
+        var database = redis.GetDatabase();
+        var key = KeyPrefix + tokenHash;
+        await database.KeyDeleteAsync(key);
+    }
+
+    public async Task StoreAsync(string refreshToken, long userId, DateTime expiresAtUtc, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = RefreshTokenHasher.Hash(refreshToken);
+        var database = redis.GetDatabase();
+        var key = KeyPrefix + tokenHash;
+        var ttl = expiresAtUtc - DateTime.UtcNow;
+        await database.StringSetAsync(key, userId, ttl);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Extensions\InfrastructureServiceExtensions.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Contracts.Authentication;
+using Crm.Domain.Repositories;
+using Crm.Domain.Repositories.Generics;
+using Crm.Domain.Services;
+using Crm.Infrastructure.Authentication;
+using Crm.Infrastructure.Persistence;
+using Crm.Infrastructure.Repositories;
+using Crm.Infrastructure.Repositories.Generics;
+using Crm.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
+using System.Text;
+
+public static class InfrastructureServiceExtensions
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        //sqlServer
+        services.AddDbContext<CrmDbContext>(option => { option.UseSqlServer(configuration.GetConnectionString("CrmDb")); });
+
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+        services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
+
+        #region Jwt
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+
+
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+                ?? throw new InvalidOperationException("JWT configuration is missing.");
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtOptions.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+            });
+        #endregion
+      
+        #region redis
+        var connectionString = configuration.GetConnectionString("Redis");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("Redis connection string is not configured.");
+
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
+
+        #endregion
+
+        return services;
+    }
+}
+
 
 
 ----------------------------------------------------------------------
@@ -1119,6 +1853,62 @@ public class UnitOfWork(
             cancellationToken);
     }
 }
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Repositories\UserRepository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities;
+using Crm.Domain.Repositories;
+using Crm.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace Crm.Infrastructure.Repositories;
+
+public class UserRepository(CrmDbContext context) : IUserRepository
+{
+    public async Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == false, cancellationToken);
+    }
+
+    public async Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.FirstOrDefaultAsync(u => u.UserName == userName && u.IsDeleted == false, cancellationToken);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Services\PasswordHasher.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities;
+using Crm.Domain.Services;
+using Microsoft.AspNetCore.Identity;
+
+namespace Crm.Infrastructure.Services;
+
+public class PasswordHasher : IPasswordHasher
+{
+    private readonly IPasswordHasher<User> _passwordHasher = new PasswordHasher<User>();
+
+    public string Hash(string password)
+    {
+        return _passwordHasher.HashPassword( new User(), password);
+    }
+
+    public bool Verify(string password,string passwordHash)
+    {
+        var result = _passwordHasher.VerifyHashedPassword( new User(), passwordHash, password);
+
+        return result == PasswordVerificationResult.Success;
+    }
+}
+
+
 
 
 ----------------------------------------------------------------------

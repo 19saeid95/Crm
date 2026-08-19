@@ -3,11 +3,13 @@ using Crm.Domain.Repositories;
 using Crm.Domain.Repositories.Generics;
 using Crm.Domain.Services;
 using Crm.Infrastructure.Authentication;
+using Crm.Infrastructure.Authorization;
 using Crm.Infrastructure.Persistence;
 using Crm.Infrastructure.Repositories;
 using Crm.Infrastructure.Repositories.Generics;
 using Crm.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +30,8 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         #region Jwt
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
@@ -52,8 +56,10 @@ public static class InfrastructureServiceExtensions
                 };
 
             });
+        services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddHttpContextAccessor();
         #endregion
-      
+
         #region redis
         var connectionString = configuration.GetConnectionString("Redis");
         if (string.IsNullOrWhiteSpace(connectionString))

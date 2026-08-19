@@ -15,6 +15,7 @@ public class AuthController(ISender sender) : BaseController
     }
 
     [HttpPost("refresh")]
+    //[Authorize(Policy = "User.Create")]
     public async Task<ActionResult<RefreshTokenResponse>> Refresh([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
     {
         var result = await sender.Send(command, cancellationToken);

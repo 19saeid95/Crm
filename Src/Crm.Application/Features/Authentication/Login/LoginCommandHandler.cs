@@ -24,6 +24,8 @@ public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher
         if (!passwordValid)
             throw new UnauthorizedException("نام کاربری یا رمز عبور اشتباه است.");
 
+        user.LastLoginDate = DateTime.UtcNow;
+
         var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
 
         var refreshToken = refreshTokenGenerator.Generate();
