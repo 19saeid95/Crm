@@ -1,0 +1,2364 @@
+======================================================================
+📁 ساختار پروژه: Crm
+======================================================================
+
+├── .gitattributes
+├── .github/
+│   └── workflows/
+├── .gitignore
+├── Crm.slnx
+├── deepseek_python_20260810_b46c83.py  📄
+├── Doc/
+│   ├── curentProject_V4.txt
+│   └── Document_V4.txt
+├── Src/
+│   ├── Crm.Api/
+│   │   ├── appsettings.Development.json  📄
+│   │   ├── appsettings.json  📄
+│   │   ├── Controllers/
+│   │   │   ├── BaseController.cs  📄
+│   │   │   └── v1/
+│   │   │       ├── AuthController.cs  📄
+│   │   │       └── UsersController.cs  📄
+│   │   ├── Crm.Api.csproj
+│   │   ├── Crm.Api.csproj.user
+│   │   ├── Crm.Api.http
+│   │   ├── Extensions/
+│   │   │   └── ApiVersioningExtensions.cs  📄
+│   │   ├── Middleware/
+│   │   │   └── GlobalExceptionMiddleware.cs  📄
+│   │   └── Program.cs  📄
+│   ├── Crm.Application/
+│   │   ├── Common/
+│   │   │   ├── Behaviors/
+│   │   │   │   └── ValidationBehavior.cs  📄
+│   │   │   └── Exceptions/
+│   │   │       └── AccessException .cs  📄
+│   │   ├── Contracts/
+│   │   │   └── Authentication/
+│   │   │       ├── ICurrentUser.cs  📄
+│   │   │       ├── IJwtTokenGenerator.cs  📄
+│   │   │       ├── IRefreshTokenGenerator.cs  📄
+│   │   │       └── IRefreshTokenStore.cs  📄
+│   │   ├── Crm.Application.csproj
+│   │   ├── Extensions/
+│   │   │   └── ApplicationServiceExtensions.cs  📄
+│   │   └── Features/
+│   │       ├── Authentication/
+│   │       │   ├── Login/
+│   │       │   │   ├── LoginCommand.cs  📄
+│   │       │   │   ├── LoginCommandHandler.cs  📄
+│   │       │   │   ├── LoginCommandValidator.cs  📄
+│   │       │   │   └── LoginResponse.cs  📄
+│   │       │   └── RefreshToken/
+│   │       │       ├── RefreshTokenCommand.cs  📄
+│   │       │       ├── RefreshTokenCommandHandler.cs  📄
+│   │       │       ├── RefreshTokenCommandValidator.cs  📄
+│   │       │       └── RefreshTokenResponse.cs  📄
+│   │       └── Users/
+│   │           └── CreateUser/
+│   │               ├── CreateUserCommand.cs  📄
+│   │               ├── CreateUserCommandHandler.cs  📄
+│   │               ├── CreateUserCommandValidator.cs  📄
+│   │               └── CreateUserResponse.cs  📄
+│   ├── Crm.Domain/
+│   │   ├── Crm.Domain.csproj
+│   │   ├── Entities/
+│   │   │   ├── BaseEntities/
+│   │   │   │   └── BaseEntity.cs  📄
+│   │   │   ├── Customer.cs  📄
+│   │   │   ├── Location.cs  📄
+│   │   │   ├── Permission.cs  📄
+│   │   │   ├── Role.cs  📄
+│   │   │   ├── RolePermission.cs  📄
+│   │   │   ├── User.cs  📄
+│   │   │   └── UserRole.cs  📄
+│   │   ├── Repositories/
+│   │   │   ├── Generics/
+│   │   │   │   └── IRepository.cs  📄
+│   │   │   ├── IUnitOfWork.cs  📄
+│   │   │   └── IUserRepository.cs  📄
+│   │   └── Services/
+│   │       └── IPasswordHasher.cs  📄
+│   └── Crm.Infrastructure/
+│       ├── Authentication/
+│       │   ├── Jwt/
+│       │   │   ├── CurrentUser.cs  📄
+│       │   │   ├── JwtOptions.cs  📄
+│       │   │   └── JwtTokenGenerator.cs  📄
+│       │   ├── Permissions/
+│       │   │   ├── PermissionAuthorizationHandler.cs  📄
+│       │   │   ├── PermissionPolicyProvider.cs  📄
+│       │   │   ├── PermissionRequirement.cs  📄
+│       │   │   └── Permissions.cs  📄
+│       │   └── RefreshTokens/
+│       │       ├── RefreshTokenGenerator.cs  📄
+│       │       ├── RefreshTokenHasher.cs  📄
+│       │       └── RefreshTokenStore.cs  📄
+│       ├── CodeTemplates/
+│       │   └── EFCore/
+│       │       ├── DbContext.t4
+│       │       ├── EntityType.t4
+│       │       └── EntityTypeConfiguration.t4
+│       ├── Crm.Infrastructure.csproj
+│       ├── efpt.config.json  📄
+│       ├── Extensions/
+│       │   └── InfrastructureServiceExtensions.cs  📄
+│       ├── Persistence/
+│       │   ├── Configurations/
+│       │   │   ├── CustomerConfiguration.cs  📄
+│       │   │   ├── LocationConfiguration.cs  📄
+│       │   │   ├── PermissionConfiguration.cs  📄
+│       │   │   ├── RoleConfiguration.cs  📄
+│       │   │   ├── RolePermissionConfiguration.cs  📄
+│       │   │   ├── UserConfiguration.cs  📄
+│       │   │   └── UserRoleConfiguration.cs  📄
+│       │   └── CrmDbContext.cs  📄
+│       ├── Repositories/
+│       │   ├── Generics/
+│       │   │   └── Repository.cs  📄
+│       │   ├── UnitOfWork.cs  📄
+│       │   └── UserRepository.cs  📄
+│       └── Services/
+│           └── PasswordHasher.cs  📄
+└── Tests/
+    ├── Crm.IntegrationTests/
+    │   ├── Class1.cs  📄
+    │   └── Crm.IntegrationTests.csproj
+    └── Crm.UnitTests/
+        └── Crm.UnitTests.csproj
+
+======================================================================
+📄 محتوای فایل‌های کد
+======================================================================
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Controllers\BaseController.cs
+----------------------------------------------------------------------
+
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Crm.Api.Controllers;
+
+[ApiController]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/[controller]")]
+public abstract class BaseController : ControllerBase
+{
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Controllers\v1\AuthController.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Authorization;
+using Crm.Application.Features.Authentication.Login;
+using Crm.Application.Features.Authentication.RefreshToken;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Crm.Api.Controllers.v1;
+
+public class AuthController(ISender sender) : BaseController
+{
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("refresh")]
+    //[Authorize(Policy = Permissions.Customer.View)]
+    public async Task<ActionResult<RefreshTokenResponse>> Refresh([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return Ok(result);
+    }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Controllers\v1\UsersController.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Authorization;
+using Crm.Application.Features.Authentication.Login;
+using Crm.Application.Features.Authentication.RefreshToken;
+using Crm.Application.Features.Users.CreateUser;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Crm.Api.Controllers.v1;
+
+public class UsersController(ISender sender) : BaseController
+{
+    [HttpPost]
+    [Authorize(Policy = Permissions.User.Create)]
+    public async Task<ActionResult<CreateUserResponse>> Create(CreateUserCommand command, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+
+        return Created($"/api/v1/users/{result.Id}", result);
+    }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Extensions\ApiVersioningExtensions.cs
+----------------------------------------------------------------------
+
+﻿using Asp.Versioning;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Crm.Api.Extensions;
+
+public static class ApiVersioningExtensions
+{
+    public static IServiceCollection AddApiVersioningConfiguration(
+        this IServiceCollection services)
+    {
+        services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1.0);
+
+            options.AssumeDefaultVersionWhenUnspecified = true;
+
+            options.ReportApiVersions = true;
+        })
+        .AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV";
+
+            options.SubstituteApiVersionInUrl = true;
+        });
+
+        return services;
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Middleware\GlobalExceptionMiddleware.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Exceptions;
+using FluentValidation;
+
+namespace Crm.Api.Middleware;
+
+public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
+{
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await next(context);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Unhandled exception occurred.");
+            await HandleExceptionAsync(context, exception);
+        }
+    }
+
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        context.Response.ContentType = "application/json";
+        switch (exception)
+        {
+            case ValidationException validationException:
+
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+                var errors = validationException.Errors.GroupBy(x => x.PropertyName).ToDictionary(
+                        group => group.Key,
+                        group => group
+                            .Select(x => x.ErrorMessage)
+                            .ToArray());
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 400,
+                        message = "اطلاعات وارد شده معتبر نیست.",
+                        errors
+                    });
+
+                return;
+
+            case UnauthorizedException:
+
+                context.Response.StatusCode =StatusCodes.Status401Unauthorized;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 401,
+                        message = exception.Message
+                    });
+
+                return;
+
+            case ForbiddenException:
+
+                context.Response.StatusCode =StatusCodes.Status403Forbidden;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 403,
+                        message = exception.Message
+                    });
+
+                return;
+
+            case NotFoundException:
+
+                context.Response.StatusCode =StatusCodes.Status404NotFound;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 404,
+                        message = exception.Message
+                    });
+
+                return;
+
+            case ConflictException:
+
+                context.Response.StatusCode =StatusCodes.Status409Conflict;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 409,
+                        message = exception.Message
+                    });
+
+                return;
+
+            default:
+
+
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 500,
+                        message = "خطای داخلی سرور رخ داده است."
+                    });
+
+                return;
+        }
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\Program.cs
+----------------------------------------------------------------------
+
+using Crm.Api.Extensions;
+using Crm.Api.Middleware;
+using Crm.Application.Extensions;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+#region Version
+builder.Services.AddApiVersioningConfiguration();
+#endregion
+
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(builder.Configuration);
+
+var app = builder.Build();
+
+#region Middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
+#endregion
+
+//if (app.Environment.IsDevelopment())
+//{
+app.UseSwagger();
+    app.UseSwaggerUI();
+//}
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\appsettings.Development.json
+----------------------------------------------------------------------
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Api\appsettings.json
+----------------------------------------------------------------------
+
+{
+  "ConnectionStrings": {
+    //"CrmDb": "Server=.;Database=CrmDb;Trusted_Connection=True;TrustServerCertificate=True;",
+    "CrmDb": "Server=192.168.2.242,2242;Database=CrmDb;User Id=sa;Password=Eefa2026@;TrustServerCertificate=True;Encrypt=False;Connect Timeout=30;",
+
+    //"Redis": "localhost:6379"
+    "Redis": "127.0.0.1:6379,password=Redis2026@,connectTimeout=5000,syncTimeout=5000,defaultDatabase=0,abortConnect=false,ssl=false"
+  },
+  "Jwt": {
+    "Issuer": "Crm.Api",
+    "Audience": "Crm.Client",
+    "SecretKey": "d6X7kL2mP5nQ8rS3tU6vW1yZ4bC9eF0jA8hN5mR2sT7pL5kX9cV6bN4qW8rY3"
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Behaviors\ValidationBehavior.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+using MediatR;
+
+namespace Crm.Application.Common.Behaviors;
+
+public class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
+    : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+{
+    public async Task<TResponse> Handle(TRequest request,RequestHandlerDelegate<TResponse> next,CancellationToken cancellationToken)
+    {
+        if (validators.Any())
+        {
+            var context = new ValidationContext<TRequest>(request);
+
+            var validationResults = await Task.WhenAll(
+                validators.Select(
+                    validator => validator.ValidateAsync(
+                        context,
+                        cancellationToken)));
+
+            var errors = validationResults
+                .SelectMany(result => result.Errors)
+                .Where(error => error is not null)
+                .ToList();
+
+            if (errors.Count != 0)
+            {
+                throw new ValidationException(errors);
+            }
+        }
+
+        return await next();
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Exceptions\AccessException .cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Common.Exceptions;
+
+public abstract class ApplicationException(string message) : Exception(message);
+
+public sealed class ForbiddenException(string message) : ApplicationException(message);
+public sealed class UnauthorizedException(string message) : ApplicationException(message);
+public sealed class ConflictException(string message) : ApplicationException(message);
+public sealed class NotFoundException( string message) : ApplicationException(message);
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Contracts\Authentication\ICurrentUser.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Contracts.Authentication;
+
+public interface ICurrentUser
+{
+    long UserId { get; }
+
+    string? UserName { get; }
+
+    bool IsAuthenticated { get; }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Contracts\Authentication\IJwtTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Contracts.Authentication;
+
+public interface IJwtTokenGenerator
+{
+    string GenerateToken(long userId, string userName);
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Contracts\Authentication\IRefreshTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Contracts.Authentication;
+
+public interface IRefreshTokenGenerator
+{
+    RefreshTokenData Generate();
+}
+
+public sealed record RefreshTokenData(string Token, DateTime ExpiresAtUtc);
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Contracts\Authentication\IRefreshTokenStore.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Contracts.Authentication;
+
+public interface IRefreshTokenStore
+{
+    Task StoreAsync(string refreshToken, long userId, DateTime expiresAtUtc, CancellationToken cancellationToken = default);
+
+    Task<long?> GetUserIdAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    Task RemoveAsync(string refreshToken, CancellationToken cancellationToken = default);
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Extensions\ApplicationServiceExtensions.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Behaviors;
+using FluentValidation;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Crm.Application.Extensions;
+
+public static class ApplicationServiceExtensions
+{
+    public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddMediatR(configuration =>
+        {
+            configuration.RegisterServicesFromAssemblies(typeof(ApplicationServiceExtensions).Assembly);
+            configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
+        services.AddValidatorsFromAssembly(typeof(ApplicationServiceExtensions).Assembly);
+
+        return services;
+    }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginCommand.cs
+----------------------------------------------------------------------
+
+﻿using MediatR;
+
+namespace Crm.Application.Features.Authentication.Login;
+
+public record LoginCommand(string UserName, string Password) : IRequest<LoginResponse>;
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginCommandHandler.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Exceptions;
+using Crm.Application.Contracts.Authentication;
+using Crm.Domain.Repositories;
+using Crm.Domain.Services;
+using MediatR;
+
+namespace Crm.Application.Features.Authentication.Login;
+
+public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher,
+    IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator, IRefreshTokenStore refreshTokenStore)
+    : IRequestHandler<LoginCommand, LoginResponse>
+{
+    public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
+    {
+        var user = await userRepository.GetByUserNameAsync(request.UserName, cancellationToken);
+
+        if (user is null)
+            throw new UnauthorizedException("نام کاربری یا رمز عبور اشتباه است.");
+
+        if (!user.IsActive)
+            throw new UnauthorizedException("حساب کاربری غیرفعال است.");
+
+        var passwordValid = passwordHasher.Verify(request.Password, user.PasswordHash);
+        if (!passwordValid)
+            throw new UnauthorizedException("نام کاربری یا رمز عبور اشتباه است.");
+
+        user.LastLoginDate = DateTime.UtcNow;
+
+        var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
+
+        var refreshToken = refreshTokenGenerator.Generate();
+
+        await refreshTokenStore.StoreAsync(refreshToken.Token, user.Id, refreshToken.ExpiresAtUtc, cancellationToken);
+
+        return new LoginResponse(user.Id, user.UserName, accessToken, refreshToken.Token);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginCommandValidator.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+
+namespace Crm.Application.Features.Authentication.Login;
+
+public class LoginCommandValidator : AbstractValidator<LoginCommand>
+{
+    public LoginCommandValidator()
+    {
+        RuleFor(x => x.UserName).NotEmpty().MaximumLength(100).MinimumLength(1);
+        RuleFor(x => x.Password).NotEmpty();
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\Login\LoginResponse.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Features.Authentication.Login;
+
+public record LoginResponse(long UserId, string UserName, string AccessToken, string RefreshToken);
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenCommand.cs
+----------------------------------------------------------------------
+
+﻿using MediatR;
+
+namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public sealed record RefreshTokenCommand(string RefreshToken) : IRequest<RefreshTokenResponse>;
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenCommandHandler.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Exceptions;
+using Crm.Application.Contracts.Authentication;
+using Crm.Domain.Repositories;
+using MediatR;
+
+namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public class RefreshTokenCommandHandler(IRefreshTokenStore refreshTokenStore, IUserRepository userRepository
+    , IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator)
+    : IRequestHandler<RefreshTokenCommand, RefreshTokenResponse>
+{
+    public async Task<RefreshTokenResponse> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    {
+        var userId = await refreshTokenStore.GetUserIdAsync(request.RefreshToken, cancellationToken);
+
+        if (userId is null)
+            throw new UnauthorizedException("Refresh Token نامعتبر یا منقضی شده است.");
+
+        var user = await userRepository.GetByUserIdAsync(userId.Value, cancellationToken);
+
+        if (user is null || !user.IsActive)
+            throw new UnauthorizedException("کاربر معتبر نیست.");
+
+        var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
+
+        var newRefreshToken = refreshTokenGenerator.Generate();
+
+        await refreshTokenStore.RemoveAsync(request.RefreshToken, cancellationToken);
+
+        await refreshTokenStore.StoreAsync(
+            newRefreshToken.Token,
+            user.Id,
+            newRefreshToken.ExpiresAtUtc,
+            cancellationToken);
+
+        return new RefreshTokenResponse(accessToken, newRefreshToken.Token);
+    }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenCommandValidator.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+
+namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public sealed class RefreshTokenCommandValidator : AbstractValidator<RefreshTokenCommand>
+{
+    public RefreshTokenCommandValidator()
+    {
+        RuleFor(x => x.RefreshToken)
+                  .NotEmpty()
+                  .WithMessage("Refresh Token الزامی است.");
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Authentication\RefreshToken\RefreshTokenResponse.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Features.Authentication.RefreshToken;
+
+public sealed record RefreshTokenResponse(string AccessToken, string RefreshToken);
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\CreateUser\CreateUserCommand.cs
+----------------------------------------------------------------------
+
+﻿using MediatR;
+
+namespace Crm.Application.Features.Users.CreateUser;
+
+public sealed record CreateUserCommand(
+     string UserName,
+    string Password,
+    string Phone,
+    string? Name,
+    string? LastName,
+    long? ParentUserId
+    ) : IRequest<CreateUserResponse>;
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\CreateUser\CreateUserCommandHandler.cs
+----------------------------------------------------------------------
+
+﻿
+using Crm.Application.Common.Exceptions;
+using Crm.Domain.Entities;
+using Crm.Domain.Repositories;
+using Crm.Domain.Services;
+using MediatR;
+
+namespace Crm.Application.Features.Users.CreateUser;
+
+public sealed class CreateUserCommandHandler(IUserRepository userRepository,IPasswordHasher passwordHasher
+    ,IUnitOfWork unitOfWork) 
+    : IRequestHandler<CreateUserCommand, CreateUserResponse>
+{
+    public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    {
+        var existingUser = await userRepository.GetByUserNameAsync(request.UserName, cancellationToken);
+
+        if (existingUser is not null)
+            throw new ConflictException("نام کاربری قبلاً استفاده شده است.");
+
+        if (request.ParentUserId.HasValue)
+        {
+            var parentUser = await userRepository.GetByUserIdAsync(request.ParentUserId.Value, cancellationToken);
+
+            if (parentUser is null)
+                throw new NotFoundException("کاربر والد پیدا نشد.");
+
+
+            if (!parentUser.IsActive)
+                throw new ConflictException("کاربر والد غیرفعال است.");
+        }
+
+        var user = new User
+        {
+            UserName = request.UserName,
+            PasswordHash = passwordHasher.Hash(request.Password),
+            Phone = request.Phone,
+            Name = request.Name,
+            LastName = request.LastName,
+            ParentUserId = request.ParentUserId,
+            IsActive = true,
+            IsSuperAdmin = false
+        };
+
+        await userRepository.AddAsync(user,cancellationToken);
+
+        await unitOfWork.SaveChangesAsync( cancellationToken);
+
+
+        return new CreateUserResponse(
+            user.Id,
+            user.UserName,
+            user.Phone,
+            user.Name,
+            user.LastName,
+            user.ParentUserId,
+            user.IsActive);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\CreateUser\CreateUserCommandValidator.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+
+namespace Crm.Application.Features.Users.CreateUser;
+
+public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+{
+    public CreateUserCommandValidator()
+    {
+        RuleFor(x => x.UserName).NotEmpty().MaximumLength(50);
+
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(6);
+
+        RuleFor(x => x.Phone).NotEmpty().MaximumLength(15);
+
+        RuleFor(x => x.Name).MaximumLength(50);
+
+        RuleFor(x => x.LastName).MaximumLength(150);
+
+        RuleFor(x => x.ParentUserId).GreaterThan(0).When(x => x.ParentUserId.HasValue);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\CreateUser\CreateUserResponse.cs
+----------------------------------------------------------------------
+
+﻿
+namespace Crm.Application.Features.Users.CreateUser;
+
+public sealed record CreateUserResponse(
+    long Id,
+    string UserName,
+    string Phone,
+    string? Name,
+    string? LastName,
+    long? ParentUserId,
+    bool IsActive);
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\BaseEntities\BaseEntity.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Domain.Entities.BaseEntites;
+
+public abstract class BaseEntity<TKey>
+{
+    public TKey Id { get; set; } = default!;
+
+    public DateTime CreateDate { get; set; }
+
+    public DateTime? LastUpdate { get; set; }
+
+    public bool IsDeleted { get; set; }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Customer.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Customer : BaseEntity<long>
+{
+
+    public long UserId { get; set; }
+
+
+    public long LocationId { get; set; }
+
+
+    public string CustomerCode { get; set; } = null!;
+
+
+    public bool IsActive { get; set; }
+
+
+    public int? PurchasePerformanceScore { get; set; }
+
+
+    public int? PurchaseMixQualityScore { get; set; }
+
+
+    public int? StoreCapacityScore { get; set; }
+
+
+    public int? LoyaltyStrategicCooperationScore { get; set; }
+
+
+    public int? ProfessionalStaffQualityScore { get; set; }
+
+
+    public int? RegionalMarketPotentialScore { get; set; }
+
+    public virtual Location Location { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Location.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Location : BaseEntity<long>
+{
+
+    public long? ParentLocationId { get; set; }
+
+
+    public string Name { get; set; } = null!;
+
+
+    public bool IsActive { get; set; }
+
+    public virtual Customer? Customer { get; set; }
+
+    public virtual ICollection<Location>
+        InverseParentLocation { get; set; }
+        = new List<Location>();
+
+    public virtual Location? ParentLocation { get; set; }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Permission.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Permission : BaseEntity<long>
+{
+
+    public string Name { get; set; } = null!;
+
+
+    public string? Description { get; set; }
+
+    public virtual ICollection<RolePermission>
+        RolePermissions { get; set; }
+        = new List<RolePermission>();
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\Role.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class Role : BaseEntity<long>
+{
+
+    public string Name { get; set; } = null!;
+
+
+    public string? Description { get; set; }
+
+    public virtual ICollection<RolePermission>
+        RolePermissions { get; set; }
+        = new List<RolePermission>();
+
+    public virtual ICollection<UserRole>
+        UserRoles { get; set; }
+        = new List<UserRole>();
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\RolePermission.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class RolePermission
+{
+
+    public long RoleId { get; set; }
+
+
+    public long PermissionId { get; set; }
+
+
+    public DateTime CreateDate { get; set; }
+
+    public virtual Permission Permission { get; set; } = null!;
+
+    public virtual Role Role { get; set; } = null!;
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\User.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities.BaseEntites;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class User : BaseEntity<long>
+{
+
+    public long? ParentUserId { get; set; }
+
+
+    public string? Name { get; set; }
+
+
+    public string? LastName { get; set; }
+
+
+    public string UserName { get; set; } = null!;
+
+
+    public string PasswordHash { get; set; } = null!;
+
+
+    public string Phone { get; set; } = null!;
+
+
+    public bool IsSuperAdmin { get; set; }
+
+
+    public bool IsActive { get; set; }
+
+
+    public DateTime? LastLoginDate { get; set; }
+
+    public virtual Customer? Customer { get; set; }
+
+    public virtual ICollection<User>
+        InverseParentUser { get; set; }
+        = new List<User>();
+
+    public virtual User? ParentUser { get; set; }
+
+    public virtual ICollection<UserRole>
+        UserRoles { get; set; }
+        = new List<UserRole>();
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Entities\UserRole.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+
+
+
+namespace Crm.Domain.Entities;
+
+
+public partial class UserRole
+{
+
+    public long UserId { get; set; }
+
+
+    public long RoleId { get; set; }
+
+
+    public DateTime CreateDate { get; set; }
+
+    public virtual Role Role { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Repositories\Generics\IRepository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities.BaseEntites;
+
+namespace Crm.Domain.Repositories.Generics;
+
+public interface IRepository<TEntity, TKey> where TEntity : BaseEntity<TKey>
+{
+    Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
+
+    Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+
+    void Update(TEntity entity);
+
+    void Remove(TEntity entity);
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Repositories\IUnitOfWork.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Domain.Repositories;
+
+public interface IUnitOfWork
+{
+    Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default);
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Repositories\IUserRepository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities;
+
+namespace Crm.Domain.Repositories;
+
+public interface IUserRepository
+{
+    Task AddAsync(User user, CancellationToken cancellationToken = default);
+    Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
+    Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default);
+    Task<bool> HasPermissionAsync(long userId, string permission, CancellationToken cancellationToken = default);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Domain\Services\IPasswordHasher.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Domain.Services;
+
+public interface IPasswordHasher
+{
+    string Hash(string password);
+    bool Verify(string password, string passwordHash);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\Jwt\CurrentUser.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Contracts.Authentication;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+
+namespace Crm.Infrastructure.Authentication;
+
+public sealed class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUser
+{
+    private ClaimsPrincipal User => httpContextAccessor.HttpContext?.User ?? new ClaimsPrincipal();
+
+    public long UserId
+    {
+        get
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return long.TryParse(value, out var userId) ? userId : 0;
+        }
+    }
+    public string? UserName => User.FindFirstValue(ClaimTypes.Name);
+
+    public bool IsAuthenticated => User.Identity?.IsAuthenticated ?? false;
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\Jwt\JwtOptions.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Infrastructure.Authentication;
+
+public sealed class JwtOptions
+{
+    public const string SectionName = "Jwt";
+
+    public string Issuer { get; set; } = string.Empty;
+
+    public string Audience { get; set; } = string.Empty;
+
+    public string SecretKey { get; set; } = string.Empty;
+
+    public int AccessTokenExpirationMinutes { get; set; } = 60;
+
+    public int RefreshTokenExpirationDays { get; set; } = 7;
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\Jwt\JwtTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Crm.Application.Contracts.Authentication;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Crm.Infrastructure.Authentication;
+
+public sealed class JwtTokenGenerator(IOptions<JwtOptions> options) : IJwtTokenGenerator
+{
+    private readonly JwtOptions _options = options.Value;
+    public string GenerateToken(long userId, string userName)
+    {
+        var claims = new[]
+        {
+             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+             new Claim(ClaimTypes.Name, userName)
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
+
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var expires = DateTime.UtcNow.AddMinutes(_options.AccessTokenExpirationMinutes);
+
+        var token = new JwtSecurityToken(
+            issuer: _options.Issuer,
+            audience: _options.Audience,
+            claims: claims,
+            expires: expires,
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\Permissions\PermissionAuthorizationHandler.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Contracts.Authentication;
+using Crm.Domain.Repositories;
+using Microsoft.AspNetCore.Authorization;
+
+namespace Crm.Infrastructure.Authentication;
+
+public sealed class PermissionAuthorizationHandler(ICurrentUser currentUser, IUserRepository userRepository)
+    : AuthorizationHandler<PermissionRequirement>
+{
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+    {
+        if (!currentUser.IsAuthenticated)
+            return;
+
+        if (currentUser.UserId <= 0)
+            return;
+
+        var hasPermission = await userRepository.HasPermissionAsync(currentUser.UserId, requirement.Permission, CancellationToken.None);
+
+        if (hasPermission)
+            context.Succeed(requirement);
+
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\Permissions\PermissionPolicyProvider.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Infrastructure.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
+
+namespace Crm.Infrastructure.Authorization;
+
+public sealed class PermissionPolicyProvider(IOptions<AuthorizationOptions> options) : DefaultAuthorizationPolicyProvider(options)
+{
+    public override Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
+    {
+        var policy = new AuthorizationPolicyBuilder().AddRequirements(new PermissionRequirement(policyName)).Build();
+
+        return Task.FromResult<AuthorizationPolicy?>(policy);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\Permissions\PermissionRequirement.cs
+----------------------------------------------------------------------
+
+﻿using Microsoft.AspNetCore.Authorization;
+
+namespace Crm.Infrastructure.Authentication;
+
+public sealed class PermissionRequirement(string permission) : IAuthorizationRequirement
+{
+    public string Permission { get; } = permission;
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\Permissions\Permissions.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Authorization;
+
+public static class Permissions
+{
+    public static class User
+    {
+        public const string View = "User.View";
+        public const string Create = "User.Create";
+        public const string Update = "User.Update";
+    }
+
+    public static class Customer
+    {
+        public const string View = "Customer.View";
+        public const string Create = "Customer.Create";
+        public const string Update = "Customer.Update";
+    }
+
+    public static class Location
+    {
+        public const string View = "Location.View";
+        public const string Create = "Location.Create";
+        public const string Update = "Location.Update";
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\RefreshTokens\RefreshTokenGenerator.cs
+----------------------------------------------------------------------
+
+﻿using System.Security.Cryptography;
+using Crm.Application.Contracts.Authentication;
+using Microsoft.Extensions.Options;
+
+namespace Crm.Infrastructure.Authentication;
+
+public sealed class RefreshTokenGenerator(IOptions<JwtOptions> options)
+    : IRefreshTokenGenerator
+{
+    public RefreshTokenData Generate()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(64);
+
+        var token = Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+
+        var expiresAtUtc =DateTime.UtcNow.AddDays(options.Value.RefreshTokenExpirationDays);
+
+        return new RefreshTokenData(token,expiresAtUtc);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\RefreshTokens\RefreshTokenHasher.cs
+----------------------------------------------------------------------
+
+﻿using System.Security.Cryptography;
+using System.Text;
+
+namespace Crm.Infrastructure.Authentication;
+
+internal static class RefreshTokenHasher
+{
+    public static string Hash(string refreshToken)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
+        return Convert.ToHexString(bytes);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Authentication\RefreshTokens\RefreshTokenStore.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Contracts.Authentication;
+using StackExchange.Redis;
+
+namespace Crm.Infrastructure.Authentication;
+
+public class RefreshTokenStore(IConnectionMultiplexer redis) : IRefreshTokenStore
+{
+    private const string KeyPrefix = "refresh-token:";
+    public async Task<long?> GetUserIdAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = RefreshTokenHasher.Hash(refreshToken);
+        var database = redis.GetDatabase();
+        var key = KeyPrefix + tokenHash;
+        var value = await database.StringGetAsync(key);
+        if (!value.HasValue)
+            return null;
+
+        return long.Parse(value!);
+    }
+
+    public async Task RemoveAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var tokenHash =RefreshTokenHasher.Hash(refreshToken);
+        var database = redis.GetDatabase();
+        var key = KeyPrefix + tokenHash;
+        await database.KeyDeleteAsync(key);
+    }
+
+    public async Task StoreAsync(string refreshToken, long userId, DateTime expiresAtUtc, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = RefreshTokenHasher.Hash(refreshToken);
+        var database = redis.GetDatabase();
+        var key = KeyPrefix + tokenHash;
+        var ttl = expiresAtUtc - DateTime.UtcNow;
+        await database.StringSetAsync(key, userId, ttl);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Extensions\InfrastructureServiceExtensions.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Contracts.Authentication;
+using Crm.Domain.Repositories;
+using Crm.Domain.Repositories.Generics;
+using Crm.Domain.Services;
+using Crm.Infrastructure.Authentication;
+using Crm.Infrastructure.Authorization;
+using Crm.Infrastructure.Persistence;
+using Crm.Infrastructure.Repositories;
+using Crm.Infrastructure.Repositories.Generics;
+using Crm.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
+using System.Text;
+
+public static class InfrastructureServiceExtensions
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        //sqlServer
+        services.AddDbContext<CrmDbContext>(option => { option.UseSqlServer(configuration.GetConnectionString("CrmDb")); });
+
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+        services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+        #region Jwt
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+
+
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+                ?? throw new InvalidOperationException("JWT configuration is missing.");
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtOptions.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+            });
+        services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddHttpContextAccessor();
+        #endregion
+
+        #region redis
+        var connectionString = configuration.GetConnectionString("Redis");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("Redis connection string is not configured.");
+
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(connectionString));
+
+        #endregion
+
+        return services;
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\CustomerConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class CustomerConfiguration
+    : IEntityTypeConfiguration<Customer>
+{
+    public void Configure(
+        EntityTypeBuilder<Customer> entity)
+    {
+        entity.ToTable("Customers", "crm");
+
+        entity.HasIndex(
+            e => e.LocationId,
+            "IX_Customers_LocationId"
+        );
+
+        entity.HasIndex(
+            e => e.CustomerCode,
+            "UX_Customers_CustomerCode"
+        ).IsUnique();
+
+        entity.HasIndex(
+            e => e.LocationId,
+            "UX_Customers_LocationId"
+        ).IsUnique();
+
+        entity.HasIndex(
+            e => e.UserId,
+            "UX_Customers_UserId"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getutcdate())", "DF_Customers_CreateDate");
+        entity.Property(e => e.CustomerCode)
+            .HasMaxLength(50);
+        entity.Property(e => e.IsActive)
+            .HasDefaultValue(true, "DF_Customers_IsActive");
+
+        entity.HasOne(d => d.Location)
+            .WithOne(
+                p => p.Customer
+            )
+            
+            .HasForeignKey<Customer>(d => d.LocationId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_Customers_Location");
+
+        entity.HasOne(d => d.User)
+            .WithOne(
+                p => p.Customer
+            )
+            
+            .HasForeignKey<Customer>(d => d.UserId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_Customers_User");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Customer> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\LocationConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class LocationConfiguration
+    : IEntityTypeConfiguration<Location>
+{
+    public void Configure(
+        EntityTypeBuilder<Location> entity)
+    {
+        entity.ToTable("Locations", "crm");
+
+        entity.HasIndex(
+            e => e.ParentLocationId,
+            "IX_Locations_ParentLocationId"
+        );
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getutcdate())", "DF_Locations_CreateDate");
+        entity.Property(e => e.IsActive)
+            .HasDefaultValue(true, "DF_Locations_IsActive");
+        entity.Property(e => e.Name)
+            .HasMaxLength(150);
+
+        entity.HasOne(d => d.ParentLocation)
+            .WithMany(
+                p => p.InverseParentLocation
+            )
+            
+            .HasForeignKey(d => d.ParentLocationId)
+            .HasConstraintName("FK_Locations_Parent");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Location> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\PermissionConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class PermissionConfiguration
+    : IEntityTypeConfiguration<Permission>
+{
+    public void Configure(
+        EntityTypeBuilder<Permission> entity)
+    {
+        entity.ToTable("Permissions", "auth");
+
+        entity.HasIndex(
+            e => e.Name,
+            "UQ_Permissions_Name"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_Permissions_CreateDate");
+        entity.Property(e => e.Description)
+            .HasMaxLength(250);
+        entity.Property(e => e.Name)
+            .HasMaxLength(150);
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Permission> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\RoleConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class RoleConfiguration
+    : IEntityTypeConfiguration<Role>
+{
+    public void Configure(
+        EntityTypeBuilder<Role> entity)
+    {
+        entity.ToTable("Roles", "auth");
+
+        entity.HasIndex(
+            e => e.Name,
+            "UQ_Roles_Name"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_Roles_CreateDate");
+        entity.Property(e => e.Description)
+            .HasMaxLength(250);
+        entity.Property(e => e.Name)
+            .HasMaxLength(100);
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<Role> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\RolePermissionConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class RolePermissionConfiguration
+    : IEntityTypeConfiguration<RolePermission>
+{
+    public void Configure(
+        EntityTypeBuilder<RolePermission> entity)
+    {
+        entity.HasKey(
+            e => new { e.RoleId, e.PermissionId }
+        );
+
+        entity.ToTable("RolePermissions", "auth");
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_RolePermissions_CreateDate");
+
+        entity.HasOne(d => d.Permission)
+            .WithMany(
+                p => p.RolePermissions
+            )
+            
+            .HasForeignKey(d => d.PermissionId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_RolePermissions_Permissions");
+
+        entity.HasOne(d => d.Role)
+            .WithMany(
+                p => p.RolePermissions
+            )
+            
+            .HasForeignKey(d => d.RoleId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_RolePermissions_Roles");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<RolePermission> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\UserConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class UserConfiguration
+    : IEntityTypeConfiguration<User>
+{
+    public void Configure(
+        EntityTypeBuilder<User> entity)
+    {
+        entity.ToTable("Users", "auth");
+
+        entity.HasIndex(
+            e => e.LastName,
+            "IX_Users_LastName"
+        );
+
+        entity.HasIndex(
+            e => e.Name,
+            "IX_Users_Name"
+        );
+
+        entity.HasIndex(
+            e => e.ParentUserId,
+            "IX_Users_ParentUserId"
+        );
+
+        entity.HasIndex(
+            e => e.Phone,
+            "IX_Users_Phone"
+        );
+
+        entity.HasIndex(
+            e => e.UserName,
+            "UQ_Users_UserName"
+        ).IsUnique();
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_Users_CreateDate");
+        entity.Property(e => e.IsActive)
+            .HasDefaultValue(true, "DF_Users_IsActive");
+        entity.Property(e => e.LastLoginDate)
+            .HasColumnType("datetime");
+        entity.Property(e => e.LastName)
+            .HasMaxLength(150);
+        entity.Property(e => e.Name)
+            .HasMaxLength(50);
+        entity.Property(e => e.PasswordHash)
+            .HasMaxLength(255);
+        entity.Property(e => e.Phone)
+            .HasMaxLength(15);
+        entity.Property(e => e.UserName)
+            .HasMaxLength(50);
+
+        entity.HasOne(d => d.ParentUser)
+            .WithMany(
+                p => p.InverseParentUser
+            )
+            
+            .HasForeignKey(d => d.ParentUserId)
+            .HasConstraintName("FK_Users_Users");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<User> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\Configurations\UserRoleConfiguration.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Crm.Infrastructure.Persistence.Configurations;
+
+public partial class UserRoleConfiguration
+    : IEntityTypeConfiguration<UserRole>
+{
+    public void Configure(
+        EntityTypeBuilder<UserRole> entity)
+    {
+        entity.HasKey(
+            e => new { e.UserId, e.RoleId }
+        );
+
+        entity.ToTable("UserRoles", "auth");
+
+        entity.Property(e => e.CreateDate)
+            .HasDefaultValueSql("(getdate())", "DF_UserRoles_CreateDate");
+
+        entity.HasOne(d => d.Role)
+            .WithMany(
+                p => p.UserRoles
+            )
+            
+            .HasForeignKey(d => d.RoleId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_UserRoles_Roles");
+
+        entity.HasOne(d => d.User)
+            .WithMany(
+                p => p.UserRoles
+            )
+            
+            .HasForeignKey(d => d.UserId)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK_UserRoles_Users");
+
+        OnConfigurePartial(entity);
+    }
+
+    partial void OnConfigurePartial(
+        EntityTypeBuilder<UserRole> entity);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Persistence\CrmDbContext.cs
+----------------------------------------------------------------------
+
+﻿// <auto-generated> This file has been auto generated by EF Core Power Tools. </auto-generated>
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using Crm.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Crm.Infrastructure.Persistence;
+
+public partial class CrmDbContext : DbContext
+{
+    public CrmDbContext(
+        DbContextOptions<CrmDbContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Customer>
+        Customers { get; set; }
+
+    public virtual DbSet<Location>
+        Locations { get; set; }
+
+    public virtual DbSet<Permission>
+        Permissions { get; set; }
+
+    public virtual DbSet<Role>
+        Roles { get; set; }
+
+    public virtual DbSet<RolePermission>
+        RolePermissions { get; set; }
+
+    public virtual DbSet<User>
+        Users { get; set; }
+
+    public virtual DbSet<UserRole>
+        UserRoles { get; set; }
+
+    protected override void OnModelCreating(
+        ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(CrmDbContext).Assembly);
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(
+        ModelBuilder modelBuilder);
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Repositories\Generics\Repository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities.BaseEntites;
+using Crm.Domain.Repositories.Generics;
+using Crm.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace Crm.Infrastructure.Repositories.Generics;
+
+public class Repository<TEntity, TKey>(CrmDbContext context) : IRepository<TEntity, TKey> where TEntity : BaseEntity<TKey>
+{
+    protected readonly CrmDbContext Context = context;
+
+    protected readonly DbSet<TEntity> DbSet = context.Set<TEntity>();
+
+    public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
+    {
+        return await DbSet.FindAsync([id], cancellationToken);
+    }
+
+    public async Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await DbSet.Where(x => !x.IsDeleted).ToListAsync(cancellationToken);
+    }
+
+    public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        await DbSet.AddAsync(entity, cancellationToken);
+    }
+
+    public void Update(TEntity entity)
+    {
+        DbSet.Update(entity);
+    }
+
+    public void Remove(TEntity entity)
+    {
+        entity.IsDeleted = true;
+        DbSet.Update(entity);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Repositories\UnitOfWork.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Repositories;
+using Crm.Infrastructure.Persistence;
+
+namespace Crm.Infrastructure.Repositories;
+
+public class UnitOfWork(
+    CrmDbContext context) : IUnitOfWork
+{
+    public async Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await context.SaveChangesAsync(
+            cancellationToken);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Repositories\UserRepository.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities;
+using Crm.Domain.Repositories;
+using Crm.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
+namespace Crm.Infrastructure.Repositories;
+
+public class UserRepository(CrmDbContext context) : IUserRepository
+{
+    public async Task AddAsync(User user, CancellationToken cancellationToken = default)
+    {
+        await context.Users.AddAsync(user, cancellationToken);
+    }
+
+    public async Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == false, cancellationToken);
+    }
+
+    public async Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.FirstOrDefaultAsync(u => u.UserName == userName && u.IsDeleted == false, cancellationToken);
+    }
+
+    public async Task<bool> HasPermissionAsync(long userId, string permission, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.
+            AsNoTracking()
+            .Where(user => user.Id == userId && !user.IsDeleted && user.IsActive)
+               .AnyAsync(user => user.IsSuperAdmin || user.UserRoles
+               .Any(userRole => userRole.Role.RolePermissions
+               .Any(rolePermission => !rolePermission.Permission.IsDeleted && rolePermission.Permission.Name == permission)),
+                cancellationToken);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\Services\PasswordHasher.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Domain.Entities;
+using Crm.Domain.Services;
+using Microsoft.AspNetCore.Identity;
+
+namespace Crm.Infrastructure.Services;
+
+public class PasswordHasher : IPasswordHasher
+{
+    private readonly IPasswordHasher<User> _passwordHasher = new PasswordHasher<User>();
+
+    public string Hash(string password)
+    {
+        return _passwordHasher.HashPassword( new User(), password);
+    }
+
+    public bool Verify(string password,string passwordHash)
+    {
+        var result = _passwordHasher.VerifyHashedPassword( new User(), passwordHash, password);
+
+        return result == PasswordVerificationResult.Success;
+    }
+}
+
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Infrastructure\efpt.config.json
+----------------------------------------------------------------------
+
+﻿{
+   "CodeGenerationMode": 6,
+   "ContextClassName": "CrmDbContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "IrregularWords": null,
+   "MinimumProductVersion": "2.6.1676",
+   "ModelNamespace": null,
+   "OutputContextPath": "Persistence",
+   "OutputPath": "..\\Crm.Domain\\Entities",
+   "PluralRules": null,
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "Crm.Infrastructure",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 4,
+   "SelectedToBeGenerated": 0,
+   "SingularRules": null,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[auth].[Permissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[RolePermissions]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[Roles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[UserRoles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[auth].[Users]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[crm].[Customers]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[crm].[Locations]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": true,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": true,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": true,
+   "UseTypedTvpParameters": true
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Tests\Crm.IntegrationTests\Class1.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.IntegrationTests
+{
+    public class Class1
+    {
+
+    }
+}
+
+
