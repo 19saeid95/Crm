@@ -72,7 +72,36 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
 
                 return;
 
+            case NotFoundException:
+
+                context.Response.StatusCode =StatusCodes.Status404NotFound;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 404,
+                        message = exception.Message
+                    });
+
+                return;
+
+            case ConflictException:
+
+                context.Response.StatusCode =StatusCodes.Status409Conflict;
+
+                await context.Response.WriteAsJsonAsync(
+                    new
+                    {
+                        success = false,
+                        statusCode = 409,
+                        message = exception.Message
+                    });
+
+                return;
+
             default:
+
 
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 

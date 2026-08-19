@@ -7,6 +7,11 @@ namespace Crm.Infrastructure.Repositories;
 
 public class UserRepository(CrmDbContext context) : IUserRepository
 {
+    public async Task AddAsync(User user, CancellationToken cancellationToken = default)
+    {
+        await context.Users.AddAsync(user, cancellationToken);
+    }
+
     public async Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default)
     {
         return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == false, cancellationToken);

@@ -2,19 +2,13 @@
 
 namespace Crm.Domain.Repositories.Generics;
 
-public interface IRepository<TEntity, TKey>
-    where TEntity : BaseEntity<TKey>
+public interface IRepository<TEntity, TKey> where TEntity : BaseEntity<TKey>
 {
-    Task<TEntity?> GetByIdAsync(
-        TKey id,
-        CancellationToken cancellationToken = default);
+    Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
 
-    Task<List<TEntity>> GetAllAsync(
-        CancellationToken cancellationToken = default);
+    Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
 
-    Task AddAsync(
-        TEntity entity,
-        CancellationToken cancellationToken = default);
+    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
     void Update(TEntity entity);
 

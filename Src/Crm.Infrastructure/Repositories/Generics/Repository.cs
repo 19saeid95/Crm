@@ -5,40 +5,25 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Crm.Infrastructure.Repositories.Generics;
 
-public class Repository<TEntity, TKey>(
-    CrmDbContext context)
-    : IRepository<TEntity, TKey>
-    where TEntity : BaseEntity<TKey>
+public class Repository<TEntity, TKey>(CrmDbContext context) : IRepository<TEntity, TKey> where TEntity : BaseEntity<TKey>
 {
     protected readonly CrmDbContext Context = context;
 
-    protected readonly DbSet<TEntity> DbSet =
-        context.Set<TEntity>();
+    protected readonly DbSet<TEntity> DbSet = context.Set<TEntity>();
 
-    public async Task<TEntity?> GetByIdAsync(
-        TKey id,
-        CancellationToken cancellationToken = default)
+    public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
     {
-        return await DbSet.FindAsync(
-            [id],
-            cancellationToken);
+        return await DbSet.FindAsync([id], cancellationToken);
     }
 
-    public async Task<List<TEntity>> GetAllAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<List<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await DbSet
-            .Where(x => !x.IsDeleted)
-            .ToListAsync(cancellationToken);
+        return await DbSet.Where(x => !x.IsDeleted).ToListAsync(cancellationToken);
     }
 
-    public async Task AddAsync(
-        TEntity entity,
-        CancellationToken cancellationToken = default)
+    public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
-        await DbSet.AddAsync(
-            entity,
-            cancellationToken);
+        await DbSet.AddAsync(entity, cancellationToken);
     }
 
     public void Update(TEntity entity)
