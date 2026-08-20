@@ -7,7 +7,7 @@ using MediatR;
 namespace Crm.Application.Features.Authentication.Login;
 
 public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher,
-    IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator, IRefreshTokenStore refreshTokenStore)
+    IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator, IRefreshTokenStore refreshTokenStore,IUnitOfWork unitOfWork)
     : IRequestHandler<LoginCommand, LoginResponse>
 {
     public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -25,6 +25,8 @@ public class LoginCommandHandler(IUserRepository userRepository, IPasswordHasher
             throw new UnauthorizedException("نام کاربری یا رمز عبور اشتباه است.");
 
         user.LastLoginDate = DateTime.UtcNow;
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
 

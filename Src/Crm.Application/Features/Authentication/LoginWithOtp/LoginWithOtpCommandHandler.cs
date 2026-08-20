@@ -6,7 +6,7 @@ using MediatR;
 namespace Crm.Application.Features.Authentication.LoginWithOtp;
 
 public sealed class LoginWithOtpCommandHandler(IUserRepository userRepository, IOtpService otpService,
-    IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator, IRefreshTokenStore refreshTokenStore)
+    IJwtTokenGenerator jwtTokenGenerator, IRefreshTokenGenerator refreshTokenGenerator, IRefreshTokenStore refreshTokenStore,IUnitOfWork unitOfWork)
     : IRequestHandler<LoginWithOtpCommand, LoginWithOtpResponse>
 {
     public async Task<LoginWithOtpResponse> Handle(LoginWithOtpCommand request, CancellationToken cancellationToken)
@@ -25,6 +25,8 @@ public sealed class LoginWithOtpCommandHandler(IUserRepository userRepository, I
             throw new UnauthorizedException("کد تأیید نامعتبر یا منقضی شده است.");
 
         user.LastLoginDate = DateTime.UtcNow;
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var accessToken = jwtTokenGenerator.GenerateToken(user.Id, user.UserName);
 
