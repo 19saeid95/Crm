@@ -8,11 +8,6 @@
 ├── .gitignore
 ├── Crm.slnx
 ├── deepseek_python_20260810_b46c83.py  📄
-├── Doc/
-│   ├── 190.jpg
-│   ├── curent_V5.txt
-│   ├── curentProject_V4.txt
-│   └── Document_V4.txt
 ├── Src/
 │   ├── Crm.Api/
 │   │   ├── appsettings.Development.json  📄
@@ -34,8 +29,13 @@
 │   │   ├── Common/
 │   │   │   ├── Behaviors/
 │   │   │   │   └── ValidationBehavior.cs  📄
-│   │   │   └── Exceptions/
-│   │   │       └── AccessException .cs  📄
+│   │   │   ├── Exceptions/
+│   │   │   │   └── AccessException .cs  📄
+│   │   │   ├── Mapping/
+│   │   │   │   └── MappingProfile.cs  📄
+│   │   │   └── Models/
+│   │   │       ├── PaginatedResult.cs  📄
+│   │   │       └── PaginationRequest.cs  📄
 │   │   ├── Contracts/
 │   │   │   ├── Authentication/
 │   │   │   │   ├── ICurrentUser.cs  📄
@@ -71,11 +71,25 @@
 │   │       │       ├── RequestOtpCommandValidator.cs  📄
 │   │       │       └── RequestOtpResponse.cs  📄
 │   │       └── Users/
-│   │           └── CreateUser/
-│   │               ├── CreateUserCommand.cs  📄
-│   │               ├── CreateUserCommandHandler.cs  📄
-│   │               ├── CreateUserCommandValidator.cs  📄
-│   │               └── CreateUserResponse.cs  📄
+│   │           ├── CreateUser/
+│   │           │   ├── CreateUserCommand.cs  📄
+│   │           │   ├── CreateUserCommandHandler.cs  📄
+│   │           │   ├── CreateUserCommandValidator.cs  📄
+│   │           │   └── CreateUserResponse.cs  📄
+│   │           ├── GetUserById/
+│   │           │   ├── GetUserByIdQuery.cs  📄
+│   │           │   ├── GetUserByIdQueryHandler.cs  📄
+│   │           │   └── GetUserByIdResponse.cs  📄
+│   │           ├── GetUsers/
+│   │           │   ├── GetUsersQuery.cs  📄
+│   │           │   ├── GetUsersQueryHandler.cs  📄
+│   │           │   ├── GetUsersQueryValidator.cs  📄
+│   │           │   └── GetUsersResponse.cs  📄
+│   │           └── UpdateUser/
+│   │               ├── UpdateUserCommand.cs  📄
+│   │               ├── UpdateUserCommandHandler.cs  📄
+│   │               ├── UpdateUserCommandValidator.cs  📄
+│   │               └── UpdateUserResponse.cs  📄
 │   ├── Crm.Domain/
 │   │   ├── Crm.Domain.csproj
 │   │   ├── Entities/
@@ -223,9 +237,10 @@ public class AuthController(ISender sender) : BaseController
 ----------------------------------------------------------------------
 
 ﻿using Crm.Application.Authorization;
-using Crm.Application.Features.Authentication.Login;
-using Crm.Application.Features.Authentication.RefreshToken;
 using Crm.Application.Features.Users.CreateUser;
+using Crm.Application.Features.Users.GetUserById;
+using Crm.Application.Features.Users.GetUsers;
+using Crm.Application.Features.Users.UpdateUser;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -241,6 +256,30 @@ public class UsersController(ISender sender) : BaseController
         var result = await sender.Send(command, cancellationToken);
 
         return Created($"/api/v1/users/{result.Id}", result);
+    }
+
+    [HttpGet("{id:long}")]
+    [Authorize(Policy = Permissions.User.View)]
+    public async Task<ActionResult<GetUserByIdResponse>> GetById(long id, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetUserByIdQuery(id), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet]
+    [Authorize(Policy = Permissions.User.View)]
+    public async Task<ActionResult<GetUsersResponse>> GetUsers([FromQuery] GetUsersQuery query, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(query, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPut]
+    [Authorize(Policy = Permissions.User.Update)]
+    public async Task<ActionResult<UpdateUserResponse>> Update(UpdateUserCommand command, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(command, cancellationToken);
+        return Ok(result);
     }
 }
 
@@ -549,6 +588,66 @@ public sealed class NotFoundException( string message) : ApplicationException(me
 
 
 ----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Mapping\MappingProfile.cs
+----------------------------------------------------------------------
+
+﻿using AutoMapper;
+using Crm.Application.Features.Users.CreateUser;
+using Crm.Application.Features.Users.GetUserById;
+using Crm.Application.Features.Users.GetUsers;
+using Crm.Application.Features.Users.UpdateUser;
+using Crm.Domain.Entities;
+
+namespace Crm.Application.Common.Mapping;
+
+public sealed class MappingProfile : Profile
+{
+    public MappingProfile()
+    {
+        CreateMap<User, CreateUserResponse>();
+        CreateMap<User, GetUserByIdResponse>();
+        CreateMap<User, GetUsersResponse>();
+        CreateMap<User, UpdateUserResponse>();
+        CreateMap<UpdateUserCommand, User>()
+            .ForMember(x => x.Id, opt => opt.Ignore())
+            .ForMember(x => x.PasswordHash, opt => opt.Ignore())
+            .ForMember(x => x.IsActive, opt => opt.Ignore())
+            .ForMember(x => x.IsSuperAdmin, opt => opt.Ignore())
+            .ForMember(x => x.IsDeleted, opt => opt.Ignore())
+            .ForMember(x => x.CreateDate, opt => opt.Ignore())
+            .ForMember(x => x.LastUpdate, opt => opt.Ignore());
+      
+
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Models\PaginatedResult.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Common.Models;
+
+public sealed record PaginatedResult<T>(
+IReadOnlyList<T> Items,
+    int PageNumber,
+    int PageSize,
+    int TotalCount)
+{
+    public int TotalPages =>(int)Math.Ceiling(TotalCount / (double)PageSize);
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Common\Models\PaginationRequest.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Common.Models;
+
+public sealed record PaginationRequest(int PageNumber = 1,int PageSize = 10);
+
+
+----------------------------------------------------------------------
 📄 فایل: Src\Crm.Application\Contracts\Authentication\ICurrentUser.cs
 ----------------------------------------------------------------------
 
@@ -641,6 +740,7 @@ public interface ISmsSender
 ----------------------------------------------------------------------
 
 ﻿using Crm.Application.Common.Behaviors;
+using Crm.Application.Common.Mapping;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -651,18 +751,19 @@ public static class ApplicationServiceExtensions
 {
     public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddMediatR(configuration =>
+        services.AddMediatR(cfg =>
         {
-            configuration.RegisterServicesFromAssemblies(typeof(ApplicationServiceExtensions).Assembly);
-            configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            cfg.RegisterServicesFromAssemblies(typeof(ApplicationServiceExtensions).Assembly);
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
+
         services.AddValidatorsFromAssembly(typeof(ApplicationServiceExtensions).Assembly);
+
+        services.AddAutoMapper(config => { config.AddMaps(typeof(MappingProfile).Assembly); });
 
         return services;
     }
 }
-
-
 
 
 ----------------------------------------------------------------------
@@ -1015,6 +1116,7 @@ public sealed record CreateUserCommand(
 ----------------------------------------------------------------------
 
 ﻿
+using AutoMapper;
 using Crm.Application.Common.Exceptions;
 using Crm.Domain.Entities;
 using Crm.Domain.Repositories;
@@ -1023,8 +1125,8 @@ using MediatR;
 
 namespace Crm.Application.Features.Users.CreateUser;
 
-public sealed class CreateUserCommandHandler(IUserRepository userRepository,IPasswordHasher passwordHasher
-    ,IUnitOfWork unitOfWork) 
+public sealed class CreateUserCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher
+    , IUnitOfWork unitOfWork, IMapper mapper)
     : IRequestHandler<CreateUserCommand, CreateUserResponse>
 {
     public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -1058,19 +1160,12 @@ public sealed class CreateUserCommandHandler(IUserRepository userRepository,IPas
             IsSuperAdmin = false
         };
 
-        await userRepository.AddAsync(user,cancellationToken);
+        await userRepository.AddAsync(user, cancellationToken);
 
-        await unitOfWork.SaveChangesAsync( cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        return mapper.Map<CreateUserResponse>(user);
 
-        return new CreateUserResponse(
-            user.Id,
-            user.UserName,
-            user.Phone,
-            user.Name,
-            user.LastName,
-            user.ParentUserId,
-            user.IsActive);
     }
 }
 
@@ -1120,6 +1215,253 @@ public sealed record CreateUserResponse(
     long? ParentUserId,
     bool IsActive);
 
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\GetUserById\GetUserByIdQuery.cs
+----------------------------------------------------------------------
+
+﻿using MediatR;
+
+namespace Crm.Application.Features.Users.GetUserById;
+
+public sealed record GetUserByIdQuery(long UserId) : IRequest<GetUserByIdResponse>;
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\GetUserById\GetUserByIdQueryHandler.cs
+----------------------------------------------------------------------
+
+﻿using AutoMapper;
+using Crm.Application.Common.Exceptions;
+using Crm.Domain.Repositories;
+using MediatR;
+
+namespace Crm.Application.Features.Users.GetUserById;
+
+public sealed class GetUserByIdQueryHandler(IUserRepository userRepository,IMapper mapper)
+    : IRequestHandler<GetUserByIdQuery, GetUserByIdResponse>
+{
+    public async Task<GetUserByIdResponse> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
+    {
+        var user = await userRepository.GetDetailsByUserIdAsync(request.UserId, cancellationToken);
+
+        if (user is null)
+            throw new NotFoundException("کاربر پیدا نشد.");
+
+        return mapper.Map<GetUserByIdResponse>(user);
+    }
+}
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\GetUserById\GetUserByIdResponse.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Features.Users.GetUserById;
+
+public sealed record GetUserByIdResponse(
+    long Id,
+    string UserName,
+    string Phone,
+    string? Name,
+    string? LastName,
+    long? ParentUserId,
+    bool IsActive,
+    bool IsSuperAdmin,
+    DateTime? LastLoginDate);
+
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\GetUsers\GetUsersQuery.cs
+----------------------------------------------------------------------
+
+﻿using Crm.Application.Common.Models;
+using MediatR;
+
+namespace Crm.Application.Features.Users.GetUsers;
+
+public sealed record GetUsersQuery(int PageNumber = 1, int PageSize = 10) : IRequest<PaginatedResult<GetUsersResponse>>;
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\GetUsers\GetUsersQueryHandler.cs
+----------------------------------------------------------------------
+
+﻿using AutoMapper;
+using Crm.Application.Common.Models;
+using Crm.Domain.Repositories;
+using MediatR;
+
+namespace Crm.Application.Features.Users.GetUsers;
+
+public sealed class GetUsersQueryHandler(IUserRepository userRepository,IMapper mapper)
+ : IRequestHandler<GetUsersQuery,PaginatedResult<GetUsersResponse>>
+{
+    public async Task<PaginatedResult<GetUsersResponse>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+    {
+        var (users, totalCount) = await userRepository.GetPagedAsync( request.PageNumber,request.PageSize, cancellationToken);
+
+        var items = mapper.Map<List<GetUsersResponse>>(users);
+
+        return new PaginatedResult<GetUsersResponse>(
+            items,
+            request.PageNumber,
+            request.PageSize,
+            totalCount);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\GetUsers\GetUsersQueryValidator.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+
+namespace Crm.Application.Features.Users.GetUsers;
+
+public sealed class GetUsersQueryValidator : AbstractValidator<GetUsersQuery>
+{
+    public GetUsersQueryValidator()
+    {
+        RuleFor(x => x.PageNumber).GreaterThanOrEqualTo(1);
+
+        RuleFor(x => x.PageSize).InclusiveBetween(1, 100);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\GetUsers\GetUsersResponse.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Features.Users.GetUsers;
+
+public sealed record GetUsersResponse(
+    long Id,
+    string UserName,
+    string Phone,
+    string? Name,
+    string? LastName,
+    long? ParentUserId,
+    bool IsActive,
+    bool IsSuperAdmin);
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\UpdateUser\UpdateUserCommand.cs
+----------------------------------------------------------------------
+
+﻿using MediatR;
+
+namespace Crm.Application.Features.Users.UpdateUser;
+public sealed record UpdateUserCommand(
+    long Id,
+    string UserName,
+    string Phone,
+    string? Name,
+    string? LastName,
+    long? ParentUserId
+) : IRequest<UpdateUserResponse>;
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\UpdateUser\UpdateUserCommandHandler.cs
+----------------------------------------------------------------------
+
+﻿using AutoMapper;
+using Crm.Application.Common.Exceptions;
+using Crm.Domain.Repositories;
+using MediatR;
+
+namespace Crm.Application.Features.Users.UpdateUser;
+
+public sealed class UpdateUserCommandHandler(IUserRepository userRepository,IUnitOfWork unitOfWork,IMapper mapper)
+    : IRequestHandler<UpdateUserCommand, UpdateUserResponse>
+{
+    public async Task<UpdateUserResponse> Handle( UpdateUserCommand request,CancellationToken cancellationToken)
+    {
+        var user = await userRepository.GetByUserIdAsync( request.Id,cancellationToken);
+
+        if (user is null)
+            throw new NotFoundException("کاربر پیدا نشد.");
+
+        var existingUser = await userRepository.GetByUserNameAsync(request.UserName,cancellationToken);
+
+        if (existingUser is not null &&existingUser.Id != request.Id)
+            throw new ConflictException("نام کاربری قبلاً استفاده شده است.");
+
+
+        if (request.ParentUserId.HasValue)
+        {
+            if (request.ParentUserId.Value == request.Id)
+                throw new ConflictException( "کاربر نمی‌تواند والد خودش باشد.");
+
+            var parentUser = await userRepository.GetByUserIdAsync( request.ParentUserId.Value,cancellationToken);
+
+            if (parentUser is null)
+                throw new NotFoundException("کاربر والد پیدا نشد.");
+
+            if (!parentUser.IsActive)
+                throw new ConflictException( "کاربر والد غیرفعال است.");
+        }
+
+        mapper.Map(request, user);
+        user.LastUpdate = DateTime.UtcNow;
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return mapper.Map<UpdateUserResponse>(user);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\UpdateUser\UpdateUserCommandValidator.cs
+----------------------------------------------------------------------
+
+﻿using FluentValidation;
+
+namespace Crm.Application.Features.Users.UpdateUser;
+
+public sealed class UpdateUserCommandValidator : AbstractValidator<UpdateUserCommand>
+{
+    public UpdateUserCommandValidator()
+    {
+        RuleFor(x => x.Id).GreaterThan(0);
+
+        RuleFor(x => x.UserName).NotEmpty().MaximumLength(50);
+
+        RuleFor(x => x.Phone).NotEmpty().MaximumLength(15);
+
+        RuleFor(x => x.Name).MaximumLength(50);
+
+        RuleFor(x => x.LastName).MaximumLength(150);
+
+        RuleFor(x => x.ParentUserId).GreaterThan(0).When(x => x.ParentUserId.HasValue);
+    }
+}
+
+
+----------------------------------------------------------------------
+📄 فایل: Src\Crm.Application\Features\Users\UpdateUser\UpdateUserResponse.cs
+----------------------------------------------------------------------
+
+﻿namespace Crm.Application.Features.Users.UpdateUser;
+
+public sealed record UpdateUserResponse(
+    long Id,
+    string UserName,
+    string Phone,
+    string? Name,
+    string? LastName,
+    long? ParentUserId,
+    bool IsActive,
+    bool IsSuperAdmin);
 
 
 ----------------------------------------------------------------------
@@ -1483,6 +1825,8 @@ public interface IUserRepository
     Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default);
     Task<bool> HasPermissionAsync(long userId, string permission, CancellationToken cancellationToken = default);
     Task<User?> GetByPhoneAsync(string phone, CancellationToken cancellationToken = default);
+    Task<User?> GetDetailsByUserIdAsync(long userId, CancellationToken cancellationToken = default);
+    Task<(List<User> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 }
 
 
@@ -1733,7 +2077,7 @@ public sealed class PermissionPolicyProvider(IOptions<AuthorizationOptions> opti
 {
     public override Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
-        var policy = new AuthorizationPolicyBuilder().AddRequirements(new PermissionRequirement(policyName)).Build();
+        var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().AddRequirements(new PermissionRequirement(policyName)).Build();
 
         return Task.FromResult<AuthorizationPolicy?>(policy);
     }
@@ -2548,12 +2892,28 @@ public class UserRepository(CrmDbContext context) : IUserRepository
 
     public async Task<User?> GetByUserIdAsync(long userId, CancellationToken cancellationToken = default)
     {
-        return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == false, cancellationToken);
+        return await context.Users.FirstOrDefaultAsync(u => u.Id == userId && u.IsDeleted == false, cancellationToken);
     }
 
     public async Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default)
     {
-        return await context.Users.FirstOrDefaultAsync(u => u.UserName == userName && u.IsDeleted == false, cancellationToken);
+        return await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserName == userName && u.IsDeleted == false, cancellationToken);
+    }
+
+    public async Task<User?> GetDetailsByUserIdAsync(long userId, CancellationToken cancellationToken = default)
+    {
+        return await context.Users.AsNoTracking().FirstOrDefaultAsync(user => user.Id == userId && !user.IsDeleted, cancellationToken);
+    }
+
+    public async Task<(List<User> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = context.Users.AsNoTracking().Where(user => !user.IsDeleted).OrderBy(user => user.Id);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 
     public async Task<bool> HasPermissionAsync(long userId, string permission, CancellationToken cancellationToken = default)
@@ -2562,11 +2922,12 @@ public class UserRepository(CrmDbContext context) : IUserRepository
             AsNoTracking()
             .Where(user => user.Id == userId && !user.IsDeleted && user.IsActive)
                .AnyAsync(user => user.IsSuperAdmin || user.UserRoles
-               .Any(userRole => userRole.Role.RolePermissions
+               .Any(userRole => !userRole.Role.IsDeleted && userRole.Role.RolePermissions
                .Any(rolePermission => !rolePermission.Permission.IsDeleted && rolePermission.Permission.Name == permission)),
                 cancellationToken);
     }
 }
+
 
 
 
@@ -2696,157 +3057,3 @@ public class PasswordHasher : IPasswordHasher
     }
 }
 
-
-
-----------------------------------------------------------------------
-📄 فایل: deepseek_python_20260810_b46c83.py
-----------------------------------------------------------------------
-
-import os
-import sys
-from pathlib import Path
-
-# ===== تنظیمات =====
-# پوشه‌هایی که نباید اسکن شوند
-EXCLUDE_DIRS = {
-    'bin', 'obj', 'node_modules', 'venv', '.venv', '__pycache__',
-    '.git', '.vs', '.vscode', 'packages', 'wwwroot', 'dist', 'build',
-    'Migrations', 'migrations', 'Properties'
-}
-
-# پسوند فایل‌های کدی که محتوایشان نمایش داده شود
-INCLUDE_EXTENSIONS = {
-    '.cs', '.vb', '.fs', '.xaml', '.xml', '.json', '.config',
-    '.cshtml', '.razor', '.js', '.ts', '.jsx', '.tsx',
-    '.css', '.scss', '.sql', '.py', '.java', '.cpp', '.h'
-}
-
-# حداکثر اندازه فایل (بایت) - فایل‌های بزرگتر رد می‌شوند
-MAX_FILE_SIZE = 1024 * 100  # 100 KB
-
-# ============================================
-
-def get_tree_structure(root_dir, prefix="", is_last=True):
-    """ایجاد درخت پوشه به صورت متن"""
-    lines = []
-    items = sorted([p for p in root_dir.iterdir() if p.name not in EXCLUDE_DIRS])
-    
-    for i, item in enumerate(items):
-        is_last_item = (i == len(items) - 1)
-        connector = "└── " if is_last_item else "├── "
-        
-        if item.is_dir():
-            lines.append(f"{prefix}{connector}{item.name}/")
-            extension = "    " if is_last_item else "│   "
-            lines.extend(get_tree_structure(item, prefix + extension, is_last_item))
-        else:
-            if item.suffix.lower() in INCLUDE_EXTENSIONS:
-                lines.append(f"{prefix}{connector}{item.name}  📄")
-            else:
-                lines.append(f"{prefix}{connector}{item.name}")
-    
-    return lines
-
-def collect_file_contents(root_dir):
-    """جمع‌آوری محتوای فایل‌های کد"""
-    contents = []
-    
-    for file_path in root_dir.rglob('*'):
-        # بررسی پوشه‌های استثنا
-        if any(excluded in file_path.parts for excluded in EXCLUDE_DIRS):
-            continue
-        
-        if file_path.is_file():
-            ext = file_path.suffix.lower()
-            if ext in INCLUDE_EXTENSIONS:
-                try:
-                    size = file_path.stat().st_size
-                    if size <= MAX_FILE_SIZE:
-                        relative_path = file_path.relative_to(root_dir)
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            content = f.read()
-                        contents.append({
-                            'path': str(relative_path),
-                            'content': content,
-                            'ext': ext
-                        })
-                    else:
-                        relative_path = file_path.relative_to(root_dir)
-                        contents.append({
-                            'path': str(relative_path),
-                            'content': f'[فایل بزرگتر از {MAX_FILE_SIZE/1024:.0f}KB - محتوا نمایش داده نشد]',
-                            'ext': ext
-                        })
-                except (UnicodeDecodeError, PermissionError):
-                    # فایل باینری یا بدون دسترسی
-                    relative_path = file_path.relative_to(root_dir)
-                    contents.append({
-                        'path': str(relative_path),
-                        'content': '[فایل باینری یا قابل خواندن نیست]',
-                        'ext': ext
-                    })
-    
-    return contents
-
-def generate_output(root_dir):
-    """تولید فایل خروجی"""
-    root_name = root_dir.name
-    
-    # بخش ۱: درخت پوشه
-    output = []
-    output.append("=" * 70)
-    output.append(f"📁 ساختار پروژه: {root_name}")
-    output.append("=" * 70)
-    output.append("")
-    output.extend(get_tree_structure(root_dir))
-    output.append("")
-    output.append("=" * 70)
-    output.append("📄 محتوای فایل‌های کد")
-    output.append("=" * 70)
-    output.append("")
-    
-    # بخش ۲: محتوای فایل‌ها
-    files = collect_file_contents(root_dir)
-    
-    # مرتب‌سازی بر اساس مسیر
-    files.sort(key=lambda x: x['path'])
-    
-    for file_info in files:
-        output.append("")
-        output.append("-" * 70)
-        output.append(f"📄 فایل: {file_info['path']}")
-        output.append("-" * 70)
-        output.append("")
-        output.append(file_info['content'])
-        output.append("")
-    
-    return "\n".join(output)
-
-def main():
-    # پوشه فعلی (جایی که اسکریپت اجرا می‌شود)
-    root_dir = Path.cwd()
-    
-    # درخواست مسیر سفارشی (اختیاری)
-    print(f"پوشه فعلی: {root_dir}")
-    custom_path = input("برای استفاده از مسیر دیگر وارد کنید (یا Enter برای ادامه): ").strip()
-    if custom_path:
-        root_dir = Path(custom_path)
-        if not root_dir.exists():
-            print(f"❌ مسیر '{root_dir}' وجود ندارد!")
-            return
-    
-    print(f"\n🔍 در حال اسکن: {root_dir}")
-    
-    # تولید خروجی
-    output_text = generate_output(root_dir)
-    
-    # ذخیره در فایل
-    output_file = root_dir / "project_structure.txt"
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(output_text)
-    
-    print(f"\n✅ فایل خروجی در {output_file} ذخیره شد.")
-    print(f"📊 تعداد کل فایل‌های کد: {len([p for p in root_dir.rglob('*') if p.is_file() and p.suffix.lower() in INCLUDE_EXTENSIONS])}")
-
-if __name__ == "__main__":
-    main()

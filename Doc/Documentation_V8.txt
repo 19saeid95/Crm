@@ -2,8 +2,8 @@
 📌 مستند راهنمای پیاده‌سازی Backend پروژه CRM با معماری ساده Clean Architecture
 ================================================================================
 
-نسخه: 1.1
-تاریخ: 2026-08-17
+نسخه: 1.2
+تاریخ: 2026-08-20
 وضعیت: در حال توسعه (هر بار آپدیت می‌شود)
 
 ================================================================================
@@ -180,9 +180,13 @@ Moq                  4+      Mocking در تست‌ها
 [ ] پیاده‌سازی LoginWithOtp Use-Case
 [ ] پیاده‌سازی RequestOtp Use-Case
 [ ] پیاده‌سازی RefreshToken Use-Case
-[ ] پیاده‌سازی CreateUser Use-Case
+[x] پیاده‌سازی CreateUser Use-Case
 [ ] پیاده‌سازی AddScore Use-Case
-[ ] پیاده‌سازی MappingProfile (AutoMapper)
+[x] پیاده‌سازی MappingProfile (AutoMapper)
+[x] پیاده‌سازی GetUserById Use-Case
+[x] پیاده‌سازی GetUsers Use-Case
+[x] پیاده‌سازی Pagination عمومی برای GetUsers
+[x] پیاده‌سازی UpdateUser Use-Case با PATCH
 [ ] تنظیم DI در ApplicationServiceExtensions
 
 یک نکته=ValidationBehavior از خطا جلوگیری می‌کند
@@ -208,6 +212,282 @@ Global Exception Middleware	لایه سرتاسری مدیریت خطاها بع
 [ ] تست عملکرد API با Swagger
 [ ] بررسی Security (JWT, CORS, Rate Limiting)
 [ ] تنظیم Logging با Serilog
+
+================================================================================
+👤 وضعیت پیاده‌سازی User Management
+================================================================================
+
+تا این مرحله بخش‌های اصلی مدیریت User توسعه داده شده‌اند.
+
+Featureهای تکمیل‌شده:
+- CreateUser
+- GetUserById
+- GetUsers با Pagination
+- UpdateUser با PATCH
+- AutoMapper برای Mapping
+- Validation برای Command/Queryهای مربوطه
+
+--------------------------------------------------------------------------------
+📄 GetUsers
+--------------------------------------------------------------------------------
+
+GetUsers به صورت Paginated پیاده‌سازی شده است.
+
+مدل عمومی Pagination:
+
+namespace Crm.Application.Common.Models;
+
+public sealed record PaginatedResult<T>(
+    IReadOnlyList<T> Items,
+    int PageNumber,
+    int PageSize,
+    int TotalCount)
+{
+    public int TotalPages =>
+        (int)Math.Ceiling(TotalCount / (double)PageSize);
+}
+
+مدل درخواست Pagination:
+
+namespace Crm.Application.Common.Models;
+
+public sealed record PaginationRequest(
+    int PageNumber = 1,
+    int PageSize = 10);
+
+Response مربوط به GetUsers:
+
+public sealed record GetUsersResponse(
+    long Id,
+    string UserName,
+    string Phone,
+    string? Name,
+    string? LastName,
+    long? ParentUserId,
+    bool IsActive,
+    bool IsSuperAdmin);
+
+Query خروجی زیر را دارد:
+
+PaginatedResult<GetUsersResponse>
+
+قوانین فعلی Pagination:
+- PageNumber >= 1
+- PageSize بین 1 تا 100
+
+PaginationRequest فعلاً به عنوان مدل عمومی ایجاد شده است.
+استفاده عمومی از آن در تمام Queryهای لیستی در مرحله استانداردسازی Pagination بررسی خواهد شد.
+
+--------------------------------------------------------------------------------
+📄 AutoMapper
+--------------------------------------------------------------------------------
+
+AutoMapper در Application فعال شده است.
+
+ثبت فعلی:
+
+services.AddAutoMapper(config =>
+{
+    config.AddMaps(typeof(MappingProfile).Assembly);
+});
+
+AutoMapper برای Mapping بین Entity و Response و همچنین Mapping Command به Entity استفاده می‌شود.
+
+در UpdateUser، فیلدهای حساس و Audit نباید توسط Mapping تغییر کنند.
+
+نمونه Mapping:
+
+CreateMap<UpdateUserCommand, User>()
+    .ForMember(x => x.Id, opt => opt.Ignore())
+    .ForMember(x => x.PasswordHash, opt => opt.Ignore())
+    .ForMember(x => x.IsActive, opt => opt.Ignore())
+    .ForMember(x => x.IsSuperAdmin, opt => opt.Ignore())
+    .ForMember(x => x.IsDeleted, opt => opt.Ignore())
+    .ForMember(x => x.CreatedAt, opt => opt.Ignore())
+    .ForMember(x => x.LastUpdate, opt => opt.Ignore());
+
+CreateMap<User, UpdateUserResponse>();
+
+--------------------------------------------------------------------------------
+📄 UpdateUser
+--------------------------------------------------------------------------------
+
+برای UpdateUser از PATCH استفاده شده است، زیرا این Use-Case یک Partial Update است و
+قرار نیست کل Entity کاربر جایگزین شود.
+
+Endpoint:
+
+PATCH /api/v1/users/{id}
+
+Id از Route دریافت می‌شود و داخل Body ارسال نمی‌شود.
+
+نمونه:
+
+PATCH /api/v1/users/10
+
+Body:
+
+{
+  "userName": "ali",
+  "phone": "09121234567",
+  "name": "Ali",
+  "lastName": "Ahmadi",
+  "parentUserId": 5
+}
+
+Command:
+
+public sealed record UpdateUserCommand(
+    long Id = 0,
+    string UserName = "",
+    string Phone = "",
+    string? Name = null,
+    string? LastName = null,
+    long? ParentUserId = null)
+    : IRequest<UpdateUserResponse>;
+
+Controller مقدار Id را از Route به Command منتقل می‌کند:
+
+command = command with { Id = id };
+
+در نتیجه Id نیازی به ارسال در Body ندارد.
+
+--------------------------------------------------------------------------------
+📄 UpdateUser Validation
+--------------------------------------------------------------------------------
+
+قوانین فعلی:
+
+- Id باید بزرگ‌تر از صفر باشد.
+- UserName اجباری و حداکثر 50 کاراکتر است.
+- Phone اجباری و حداکثر 15 کاراکتر است.
+- Name حداکثر 50 کاراکتر است.
+- LastName حداکثر 150 کاراکتر است.
+- ParentUserId در صورت وجود باید بزرگ‌تر از صفر باشد.
+
+--------------------------------------------------------------------------------
+📄 UpdateUser Business Rules
+--------------------------------------------------------------------------------
+
+در Handler موارد زیر بررسی می‌شوند:
+
+1. User موردنظر باید وجود داشته باشد.
+2. UserName نباید متعلق به User دیگری باشد.
+3. User نمی‌تواند Parent خودش باشد.
+4. ParentUser در صورت وجود باید وجود داشته باشد.
+5. ParentUser در صورت وجود باید Active باشد.
+6. تغییر Entity با AutoMapper انجام می‌شود.
+7. LastUpdate توسط سرور تنظیم می‌شود.
+8. سپس UnitOfWork.SaveChangesAsync اجرا می‌شود.
+
+فیلدهای زیر توسط UpdateUser عمومی قابل تغییر نیستند:
+
+- PasswordHash
+- IsActive
+- IsSuperAdmin
+- IsDeleted
+- CreatedAt
+- LastUpdate
+- Id
+
+--------------------------------------------------------------------------------
+📄 EF Core Tracking و AsNoTracking
+--------------------------------------------------------------------------------
+
+برای جلوگیری از Tracking غیرضروری، متدهای Read که فقط برای بررسی وجود داده استفاده می‌شوند
+با AsNoTracking اجرا می‌شوند.
+
+GetByUserNameAsync فقط برای بررسی وجود/تکراری بودن UserName استفاده می‌شود و باید
+AsNoTracking داشته باشد:
+
+public async Task<User?> GetByUserNameAsync(
+    string userName,
+    CancellationToken cancellationToken = default)
+{
+    return await context.Users
+        .AsNoTracking()
+        .FirstOrDefaultAsync(
+            u => u.UserName == userName && !u.IsDeleted,
+            cancellationToken);
+}
+
+این متد در CreateUser و UpdateUser برای existence check استفاده می‌شود و Entity حاصل
+از آن تغییر داده نمی‌شود.
+
+برای User اصلی که قرار است Update شود، Entity باید Tracking شده باشد.
+به همین دلیل متد جداگانه زیر استفاده می‌شود:
+
+Task<User?> GetByUserIdForUpdateAsync(
+    long userId,
+    CancellationToken cancellationToken = default);
+
+پیاده‌سازی:
+
+public async Task<User?> GetByUserIdForUpdateAsync(
+    long userId,
+    CancellationToken cancellationToken = default)
+{
+    return await context.Users
+        .FirstOrDefaultAsync(
+            u => u.Id == userId && !u.IsDeleted,
+            cancellationToken);
+}
+
+در این متد AsNoTracking استفاده نمی‌شود تا EF Core تغییرات Entity را هنگام
+SaveChanges تشخیص دهد.
+
+--------------------------------------------------------------------------------
+📄 جریان UpdateUser
+--------------------------------------------------------------------------------
+
+PATCH /users/{id}
+        |
+        v
+UsersController
+        |
+        | command with { Id = id }
+        v
+UpdateUserCommand
+        |
+        v
+ValidationBehavior
+        |
+        v
+UpdateUserCommandHandler
+        |
+        +--> GetByUserIdForUpdateAsync
+        |
+        +--> بررسی User
+        |
+        +--> GetByUserNameAsync (AsNoTracking)
+        |
+        +--> بررسی Username
+        |
+        +--> بررسی Parent
+        |
+        +--> mapper.Map(request, user)
+        |
+        +--> user.LastUpdate = DateTime.UtcNow
+        |
+        +--> SaveChangesAsync
+        |
+        +--> mapper.Map<UpdateUserResponse>(user)
+        |
+        v
+API Response
+
+--------------------------------------------------------------------------------
+📄 Permission
+--------------------------------------------------------------------------------
+
+UpdateUser با Permission زیر محافظت می‌شود:
+
+User.Update
+
+Controller نباید منطق تجاری Update را اجرا کند و فقط مسئول دریافت HTTP Request،
+ارسال Command و برگرداندن Response است.
+
+================================================================================
 
 ================================================================================
 📌 نکات مهم برای توسعه (با تأکید بر .NET 10)
@@ -256,10 +536,51 @@ Infrastructure → PasswordHasher : IPasswordHasher
 ================================================================================
 
 ================================================================================
+📌 وضعیت فعلی و تصمیمات جدید
+================================================================================
+
+تا تاریخ 2026-08-20:
+
+- GetUsers با Pagination تکمیل شد.
+- PaginatedResult<T> ایجاد شد.
+- PaginationRequest ایجاد شد.
+- AutoMapper به صورت صحیح با AddMaps در DI ثبت شد.
+- UpdateUser به صورت Partial Update طراحی شد.
+- روش HTTP برای UpdateUser از PUT به PATCH تغییر کرد.
+- Endpoint نهایی UpdateUser:
+  PATCH /api/v1/users/{id}
+- Id از Route دریافت می‌شود و در Body ارسال نمی‌شود.
+- برای Update Entity اصلی از Tracking استفاده می‌شود.
+- GetByUserNameAsync برای Read/Existence Check با AsNoTracking اجرا می‌شود.
+- برای Update Entity متد GetByUserIdForUpdateAsync با Tracking استفاده می‌شود.
+- Mapping Command به Entity با AutoMapper انجام می‌شود.
+- فیلدهای امنیتی و Audit در Mapping UpdateUser Ignore شده‌اند.
+- Activate/Deactivate هنوز پیاده‌سازی نشده است.
+- Change Password هنوز پیاده‌سازی نشده است.
+- اعتبارسنجی کامل Cycle در ParentUser هنوز پیاده‌سازی نشده است.
+- Pagination عمومی برای تمام Queryهای لیستی هنوز استانداردسازی نشده است.
+
+مرحله بعدی پیشنهادی:
+Activate / Deactivate User به عنوان Use-Case مستقل.
+
+================================================================================
 📌 تاریخچه تغییرات
 ================================================================================
 
-نسخه 1.0 (2026-08-17):
+نسخه 1.2 (2026-08-20):
+- تکمیل مستندات وضعیت فعلی User Management
+- اضافه شدن GetUsers و Pagination
+- اضافه شدن PaginatedResult<T> و PaginationRequest
+- ثبت تصمیم استفاده از PATCH برای UpdateUser
+- ثبت تفکیک Tracking و AsNoTracking در Repository
+- اضافه شدن GetByUserIdForUpdateAsync برای Update
+- اضافه شدن AsNoTracking به GetByUserNameAsync برای existence check
+- ثبت استفاده از AutoMapper در UpdateUser
+- ثبت محدودیت Mapping برای فیلدهای امنیتی و Audit
+- ثبت Permission مربوط به UpdateUser
+- مشخص شدن مرحله بعد: Activate / Deactivate User
+
+نسخه 1.1 (2026-08-17):
 - ایجاد سند اولیه
 - تعریف معماری Clean Architecture ساده
 - تعریف مدل‌های User (والد-فرزندی)، Customer، Location
