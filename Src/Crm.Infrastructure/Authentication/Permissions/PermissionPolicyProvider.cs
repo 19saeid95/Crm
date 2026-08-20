@@ -8,7 +8,7 @@ public sealed class PermissionPolicyProvider(IOptions<AuthorizationOptions> opti
 {
     public override Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
-        var policy = new AuthorizationPolicyBuilder().AddRequirements(new PermissionRequirement(policyName)).Build();
+        var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().AddRequirements(new PermissionRequirement(policyName)).Build();
 
         return Task.FromResult<AuthorizationPolicy?>(policy);
     }

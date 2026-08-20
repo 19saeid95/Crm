@@ -1,4 +1,5 @@
 ﻿
+using AutoMapper;
 using Crm.Application.Common.Exceptions;
 using Crm.Domain.Entities;
 using Crm.Domain.Repositories;
@@ -7,8 +8,8 @@ using MediatR;
 
 namespace Crm.Application.Features.Users.CreateUser;
 
-public sealed class CreateUserCommandHandler(IUserRepository userRepository,IPasswordHasher passwordHasher
-    ,IUnitOfWork unitOfWork) 
+public sealed class CreateUserCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher
+    , IUnitOfWork unitOfWork, IMapper mapper)
     : IRequestHandler<CreateUserCommand, CreateUserResponse>
 {
     public async Task<CreateUserResponse> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -42,18 +43,11 @@ public sealed class CreateUserCommandHandler(IUserRepository userRepository,IPas
             IsSuperAdmin = false
         };
 
-        await userRepository.AddAsync(user,cancellationToken);
+        await userRepository.AddAsync(user, cancellationToken);
 
-        await unitOfWork.SaveChangesAsync( cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
+        return mapper.Map<CreateUserResponse>(user);
 
-        return new CreateUserResponse(
-            user.Id,
-            user.UserName,
-            user.Phone,
-            user.Name,
-            user.LastName,
-            user.ParentUserId,
-            user.IsActive);
     }
 }
