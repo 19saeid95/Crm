@@ -22,6 +22,9 @@ public partial class Customer : BaseEntity<long>
     public string CustomerCode { get; set; } = null!;
 
 
+    public string CustomerName { get; set; } = null!;
+
+
     public bool IsActive { get; set; }
 
 

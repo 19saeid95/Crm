@@ -36,6 +36,8 @@ public partial class CustomerConfiguration
             .HasDefaultValueSql("(getutcdate())", "DF_Customers_CreateDate");
         entity.Property(e => e.CustomerCode)
             .HasMaxLength(50);
+        entity.Property(e => e.CustomerName)
+            .HasMaxLength(200);
         entity.Property(e => e.IsActive)
             .HasDefaultValue(true, "DF_Customers_IsActive");
 
