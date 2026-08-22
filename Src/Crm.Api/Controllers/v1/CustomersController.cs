@@ -1,4 +1,5 @@
-﻿using Crm.Application.Authorization;
+﻿using Crm.Api.Models;
+using Crm.Application.Authorization;
 using Crm.Application.Common.Models;
 using Crm.Application.Features.Customers.CreateCustomer;
 using Crm.Application.Features.Customers.GetCustomers;
@@ -15,7 +16,7 @@ public class CustomersController(ISender sender) : BaseController
     public async Task<ActionResult<CreateCustomerResponse>> Create( CreateCustomerCommand command, CancellationToken cancellationToken)
     {
         var result = await sender.Send(command, cancellationToken);
-        return Created($"/api/v1/customers/{result.Id}", result);
+        return Created($"/api/v1/users/{result.Id}",ApiResponseFactory.Success( result,StatusCodes.Status201Created));
     }
 
     [HttpGet("get-all")]
@@ -23,6 +24,6 @@ public class CustomersController(ISender sender) : BaseController
     public async Task<ActionResult<PaginatedResult<GetCustomersResponse>>> GetAll([FromQuery] GetCustomersQuery query, CancellationToken cancellationToken)
     {
         var result = await sender.Send( query, cancellationToken);
-        return Ok(result);
+        return Ok(ApiResponseFactory.Success(result));
     }
 }

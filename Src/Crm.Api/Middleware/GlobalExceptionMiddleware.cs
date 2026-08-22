@@ -1,9 +1,10 @@
-﻿using Crm.Application.Common.Exceptions;
+﻿using Crm.Api.Models;
+using Crm.Application.Common.Exceptions;
 using FluentValidation;
 
 namespace Crm.Api.Middleware;
 
-public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
+public sealed class GlobalExceptionMiddleware(RequestDelegate next,ILogger<GlobalExceptionMiddleware> logger)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -18,102 +19,110 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static async Task HandleExceptionAsync( HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
+
         switch (exception)
         {
             case ValidationException validationException:
+                {
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
 
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    var errors = validationException.Errors
+                        .GroupBy(x => x.PropertyName)
+                        .ToDictionary(
+                            group => group.Key,
+                            group => group
+                                .Select(x => x.ErrorMessage)
+                                .ToArray());
 
-                var errors = validationException.Errors.GroupBy(x => x.PropertyName).ToDictionary(
-                        group => group.Key,
-                        group => group
-                            .Select(x => x.ErrorMessage)
-                            .ToArray());
-
-                await context.Response.WriteAsJsonAsync(
-                    new
+                    var response = new ApiResponse<object>
                     {
-                        success = false,
-                        statusCode = 400,
-                        message = "اطلاعات وارد شده معتبر نیست.",
-                        errors
-                    });
+                        Success = false,
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = "اطلاعات وارد شده معتبر نیست.",
+                        Errors = errors
+                    };
 
-                return;
+                    await context.Response.WriteAsJsonAsync(response);
+                    return;
+                }
 
             case UnauthorizedException:
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 
-                context.Response.StatusCode =StatusCodes.Status401Unauthorized;
-
-                await context.Response.WriteAsJsonAsync(
-                    new
+                    var response = new ApiResponse<object>
                     {
-                        success = false,
-                        statusCode = 401,
-                        message = exception.Message
-                    });
+                        Success = false,
+                        StatusCode = StatusCodes.Status401Unauthorized,
+                        Message = exception.Message
+                    };
 
-                return;
+                    await context.Response.WriteAsJsonAsync(response);
+                    return;
+                }
 
             case ForbiddenException:
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
 
-                context.Response.StatusCode =StatusCodes.Status403Forbidden;
-
-                await context.Response.WriteAsJsonAsync(
-                    new
+                    var response = new ApiResponse<object>
                     {
-                        success = false,
-                        statusCode = 403,
-                        message = exception.Message
-                    });
+                        Success = false,
+                        StatusCode = StatusCodes.Status403Forbidden,
+                        Message = exception.Message
+                    };
 
-                return;
+                    await context.Response.WriteAsJsonAsync(response);
+                    return;
+                }
 
             case NotFoundException:
+                {
+                    context.Response.StatusCode = StatusCodes.Status404NotFound;
 
-                context.Response.StatusCode =StatusCodes.Status404NotFound;
-
-                await context.Response.WriteAsJsonAsync(
-                    new
+                    var response = new ApiResponse<object>
                     {
-                        success = false,
-                        statusCode = 404,
-                        message = exception.Message
-                    });
+                        Success = false,
+                        StatusCode = StatusCodes.Status404NotFound,
+                        Message = exception.Message
+                    };
 
-                return;
+                    await context.Response.WriteAsJsonAsync(response);
+                    return;
+                }
 
             case ConflictException:
+                {
+                    context.Response.StatusCode = StatusCodes.Status409Conflict;
 
-                context.Response.StatusCode =StatusCodes.Status409Conflict;
-
-                await context.Response.WriteAsJsonAsync(
-                    new
+                    var response = new ApiResponse<object>
                     {
-                        success = false,
-                        statusCode = 409,
-                        message = exception.Message
-                    });
+                        Success = false,
+                        StatusCode = StatusCodes.Status409Conflict,
+                        Message = exception.Message
+                    };
 
-                return;
+                    await context.Response.WriteAsJsonAsync(response);
+                    return;
+                }
 
             default:
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-
-                await context.Response.WriteAsJsonAsync(
-                    new
+                    var response = new ApiResponse<object>
                     {
-                        success = false,
-                        statusCode = 500,
-                        message = "خطای داخلی سرور رخ داده است."
-                    });
+                        Success = false,
+                        StatusCode = StatusCodes.Status500InternalServerError,
+                        Message = "خطای داخلی سرور رخ داده است."
+                    };
 
-                return;
+                    await context.Response.WriteAsJsonAsync(response);
+                    return;
+                }
         }
     }
 }

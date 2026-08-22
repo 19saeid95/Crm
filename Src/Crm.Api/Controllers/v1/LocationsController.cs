@@ -1,4 +1,5 @@
-﻿using Crm.Application.Authorization;
+﻿using Crm.Api.Models;
+using Crm.Application.Authorization;
 using Crm.Application.Features.Locations.CreateLocation;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,6 @@ public class LocationsController(ISender sender) : BaseController
     {
         var result = await sender.Send(command, cancellationToken);
 
-        return Created($"/api/v1/locations/{result.Id}", result);
+        return Created($"/api/v1/users/{result.Id}", ApiResponseFactory.Success(result, StatusCodes.Status201Created));
     }
 }

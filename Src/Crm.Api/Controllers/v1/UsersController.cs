@@ -17,7 +17,7 @@ public class UsersController(ISender sender) : BaseController
     //{
     //    var result = await sender.Send(command, cancellationToken);
 
-    //    return Created($"/api/v1/users/{result.Id}", result);
+    //        return Created($"/api/v1/users/{result.Id}",ApiResponseFactory.Success( result,StatusCodes.Status201Created));
     //}
 
     //[HttpGet("get-user{id:long}")]
@@ -25,7 +25,7 @@ public class UsersController(ISender sender) : BaseController
     //public async Task<ActionResult<GetUserByIdResponse>> GetById(long id, CancellationToken cancellationToken)
     //{
     //    var result = await sender.Send(new GetUserByIdQuery(id), cancellationToken);
-    //    return Ok(result);
+    //    return Ok(ApiResponseFactory.Success(result));
     //}
 
     //[HttpGet("get-userd")]
@@ -33,7 +33,7 @@ public class UsersController(ISender sender) : BaseController
     //public async Task<ActionResult<GetUsersResponse>> GetUsers([FromQuery] GetUsersQuery query, CancellationToken cancellationToken)
     //{
     //    var result = await sender.Send(query, cancellationToken);
-    //    return Ok(result);
+    //    return Ok(ApiResponseFactory.Success(result));
     //}
 
     //[HttpPut("update")]
@@ -41,7 +41,7 @@ public class UsersController(ISender sender) : BaseController
     //public async Task<ActionResult<UpdateUserResponse>> Update(UpdateUserCommand command, CancellationToken cancellationToken)
     //{
     //    var result = await sender.Send(command, cancellationToken);
-    //    return Ok(result);
+    //    return Ok(ApiResponseFactory.Success(result));
     //}
 }
 

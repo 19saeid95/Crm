@@ -1,4 +1,5 @@
-﻿using Crm.Application.Features.Authentication.Login;
+﻿using Crm.Api.Models;
+using Crm.Application.Features.Authentication.Login;
 using Crm.Application.Features.Authentication.LoginWithOtp;
 using Crm.Application.Features.Authentication.RefreshToken;
 using Crm.Application.Features.Authentication.RequestOtp;
@@ -13,28 +14,28 @@ public class AuthController(ISender sender) : BaseController
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginCommand command, CancellationToken cancellationToken)
     {
         var result = await sender.Send(command, cancellationToken);
-        return Ok(result);
+        return Ok(ApiResponseFactory.Success(result));
     }
 
     //[HttpPost("refresh")]
     //public async Task<ActionResult<RefreshTokenResponse>> Refresh([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
     //{
     //    var result = await sender.Send(command, cancellationToken);
-    //    return Ok(result);
+    //    return Ok(ApiResponseFactory.Success(result));
     //}
 
     //[HttpPost("request-otp")]
     //public async Task<ActionResult<RequestOtpResponse>> RequestOtp([FromBody] RequestOtpCommand command, CancellationToken cancellationToken)
     //{
     //    var result = await sender.Send(command, cancellationToken);
-    //    return Ok(result);
+    //    return Ok(ApiResponseFactory.Success(result));
     //}
 
     //[HttpPost("login-otp")]
     //public async Task<ActionResult<LoginWithOtpResponse>> LoginWithOtp([FromBody] LoginWithOtpCommand command, CancellationToken cancellationToken)
     //{
     //    var result = await sender.Send(command, cancellationToken);
-    //    return Ok(result);
+    //    return Ok(ApiResponseFactory.Success(result));
     //}
 }
 
