@@ -11,7 +11,7 @@ namespace Crm.Api.Controllers.v1;
 
 public class UsersController(ISender sender) : BaseController
 {
-    [HttpPost]
+    [HttpPost("create")]
     [Authorize(Policy = Permissions.User.Create)]
     public async Task<ActionResult<CreateUserResponse>> Create(CreateUserCommand command, CancellationToken cancellationToken)
     {
@@ -20,7 +20,7 @@ public class UsersController(ISender sender) : BaseController
         return Created($"/api/v1/users/{result.Id}", result);
     }
 
-    [HttpGet("{id:long}")]
+    [HttpGet("get-user{id:long}")]
     [Authorize(Policy = Permissions.User.View)]
     public async Task<ActionResult<GetUserByIdResponse>> GetById(long id, CancellationToken cancellationToken)
     {
@@ -28,7 +28,7 @@ public class UsersController(ISender sender) : BaseController
         return Ok(result);
     }
 
-    [HttpGet]
+    [HttpGet("get-userd")]
     [Authorize(Policy = Permissions.User.View)]
     public async Task<ActionResult<GetUsersResponse>> GetUsers([FromQuery] GetUsersQuery query, CancellationToken cancellationToken)
     {
@@ -36,7 +36,7 @@ public class UsersController(ISender sender) : BaseController
         return Ok(result);
     }
 
-    [HttpPut]
+    [HttpPut("update")]
     [Authorize(Policy = Permissions.User.Update)]
     public async Task<ActionResult<UpdateUserResponse>> Update(UpdateUserCommand command, CancellationToken cancellationToken)
     {

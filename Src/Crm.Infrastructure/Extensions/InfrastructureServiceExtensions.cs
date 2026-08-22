@@ -32,6 +32,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddScoped<ILocationRepository, LocationRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
+
 
         #region Otp
         // services.Configure<OtpOptions>(configuration.GetSection(OtpOptions.SectionName));

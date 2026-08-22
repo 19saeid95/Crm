@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Crm.Application.Features.Customers.CreateCustomer;
+using Crm.Application.Features.Locations.CreateLocation;
 using Crm.Application.Features.Users.CreateUser;
 using Crm.Application.Features.Users.GetUserById;
 using Crm.Application.Features.Users.GetUsers;
@@ -23,7 +25,8 @@ public sealed class MappingProfile : Profile
             .ForMember(x => x.IsDeleted, opt => opt.Ignore())
             .ForMember(x => x.CreateDate, opt => opt.Ignore())
             .ForMember(x => x.LastUpdate, opt => opt.Ignore());
-      
+        CreateMap<Location, CreateLocationResponse>();
+        CreateMap<Customer, CreateCustomerResponse>();
 
     }
 }
