@@ -21,7 +21,9 @@ public partial class Location : BaseEntity<long>
 
     public bool IsActive { get; set; }
 
-    public virtual Customer? Customer { get; set; }
+    public virtual ICollection<Customer>
+        Customers { get; set; }
+        = new List<Customer>();
 
     public virtual ICollection<Location>
         InverseParentLocation { get; set; }

@@ -28,11 +28,6 @@ public partial class CustomerConfiguration
         ).IsUnique();
 
         entity.HasIndex(
-            e => e.LocationId,
-            "UX_Customers_LocationId"
-        ).IsUnique();
-
-        entity.HasIndex(
             e => e.UserId,
             "UX_Customers_UserId"
         ).IsUnique();
@@ -45,11 +40,11 @@ public partial class CustomerConfiguration
             .HasDefaultValue(true, "DF_Customers_IsActive");
 
         entity.HasOne(d => d.Location)
-            .WithOne(
-                p => p.Customer
+            .WithMany(
+                p => p.Customers
             )
             
-            .HasForeignKey<Customer>(d => d.LocationId)
+            .HasForeignKey(d => d.LocationId)
             .OnDelete(DeleteBehavior.ClientSetNull)
             .HasConstraintName("FK_Customers_Location");
 
