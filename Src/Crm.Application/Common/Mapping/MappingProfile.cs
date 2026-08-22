@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Crm.Application.Features.Customers.CreateCustomer;
+using Crm.Application.Features.Customers.GetCustomers;
 using Crm.Application.Features.Locations.CreateLocation;
 using Crm.Application.Features.Users.CreateUser;
 using Crm.Application.Features.Users.GetUserById;
@@ -17,6 +18,8 @@ public sealed class MappingProfile : Profile
         CreateMap<User, GetUserByIdResponse>();
         CreateMap<User, GetUsersResponse>();
         CreateMap<User, UpdateUserResponse>();
+        CreateMap<Location, CreateLocationResponse>();
+        CreateMap<Customer, CreateCustomerResponse>();
         CreateMap<UpdateUserCommand, User>()
             .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.PasswordHash, opt => opt.Ignore())
@@ -25,8 +28,14 @@ public sealed class MappingProfile : Profile
             .ForMember(x => x.IsDeleted, opt => opt.Ignore())
             .ForMember(x => x.CreateDate, opt => opt.Ignore())
             .ForMember(x => x.LastUpdate, opt => opt.Ignore());
-        CreateMap<Location, CreateLocationResponse>();
-        CreateMap<Customer, CreateCustomerResponse>();
+
+        CreateMap<Customer, GetCustomersResponse>()
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName))
+            .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.User.Phone))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.User.Name))
+            .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.User.LastName))
+            .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.Name));
+
 
     }
 }

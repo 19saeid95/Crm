@@ -26,4 +26,19 @@ public sealed class CustomerRepository(CrmDbContext context) : ICustomerReposito
     {
         return await context.Customers.AsNoTracking().FirstOrDefaultAsync(x => x.CustomerCode == customerCode && !x.IsDeleted, cancellationToken);
     }
+
+    public async Task<(List<Customer> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = context.Customers.AsNoTracking()
+            .Include(customer => customer.User)
+            .Include(customer => customer.Location)
+            .Where(customer => !customer.IsDeleted)
+            .OrderBy(customer => customer.Id);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
 }

@@ -11,4 +11,6 @@ public interface ICustomerRepository
     Task<Customer?> GetByLocationIdAsync(long locationId, CancellationToken cancellationToken = default);
 
     Task<Customer?> GetByCustomerCodeAsync(string customerCode, CancellationToken cancellationToken = default);
+
+    Task<(List<Customer> Items, int TotalCount)> GetPagedAsync(int pageNumber,int pageSize,CancellationToken cancellationToken = default);
 }
