@@ -1,10 +1,10 @@
-﻿namespace Crm.Application.Features.Customers.CreateCustomer;
-
-public sealed record CreateCustomerResponse(
+﻿public sealed record CreateCustomerResponse(
     long Id,
     long UserId,
-    long LocationId,
+    string CustomerName,
     string CustomerCode,
+    string Phone,
+    long LocationId,
     bool IsActive,
     int? PurchasePerformanceScore,
     int? PurchaseMixQualityScore,

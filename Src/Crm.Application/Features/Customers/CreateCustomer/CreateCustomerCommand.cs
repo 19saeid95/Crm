@@ -2,9 +2,10 @@
 using MediatR;
 
 public sealed record CreateCustomerCommand(
-    long UserId,
-    long LocationId,
+   string CustomerName,
     string CustomerCode,
+    string Phone,
+    long LocationId,
     int PurchasePerformanceScore,
     int PurchaseMixQualityScore,
     int StoreCapacityScore,

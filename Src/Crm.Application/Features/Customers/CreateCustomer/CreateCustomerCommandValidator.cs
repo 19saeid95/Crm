@@ -7,7 +7,7 @@ public sealed class CreateCustomerCommandValidator
 {
     public CreateCustomerCommandValidator()
     {
-        RuleFor(x => x.UserId).GreaterThan(0);
+        RuleFor(x => x.CustomerName).NotEmpty();
 
         RuleFor(x => x.LocationId).GreaterThan(0);
 
